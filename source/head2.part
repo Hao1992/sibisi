@@ -78,7 +78,10 @@ section{scroll-margin-top:64px;padding-top:22px}
 .pair li span:first-child{flex:1;min-width:0}
 .pair li .qty{flex:none}
 .pair .qbtn{width:28px;height:28px;font-size:15px}
-.obtn.combo{width:100%;margin-top:4px;padding:12px;font-size:14.5px}
+.obtn.combo{width:100%;margin-top:2px;padding:13px;font-size:15px}
+.pairtot{display:flex;justify-content:space-between;align-items:baseline;border-top:1px dashed var(--line);padding-top:8px;margin-top:2px;font-weight:800}
+.pairtot b{color:var(--red);font-size:19px;font-variant-numeric:tabular-nums}
+.pair .opt{margin-top:2px}
 .pair li.tot{border-top:1px dashed var(--line);padding-top:6px;font-weight:800;color:var(--red)}
 .pair small{color:var(--muted);font-size:12px}
 .promise{margin-top:12px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px 14px;display:grid;gap:8px}

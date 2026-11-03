@@ -37,21 +37,25 @@ function findDish(c){let r=null;S.forEach(s=>s.d.forEach(x=>{if(x.c===c)r=x}));r
 function pairLine(d){const p=PR[d.c];if(!p)return "";const t=T[L];const sd=SIDE[p[0]];const d1=DRK[p[1][0]],d2=DRK[p[1][1]];
  const lo=Math.min(d1[1],d2[1]),hi=Math.max(d1[1],d2[1]);const pr=lo===hi?eur(lo,L):eur(lo,L)+"–"+eur(hi,L);
  return `<div class="pairl"><b>${t.pairWith}</b> ${esc(nm(sd[0]))} <span class="plus">+${eur(sd[1],L)}</span>${p[2]?"":` · ${esc(nm(d1[0]))} ${t.orw} ${esc(nm(d2[0]))} <span class="plus">+${pr}</span>`}</div>`}
-function pairBox(d){const p=PR[d.c];if(!p)return "";const t=T[L],ct=CT[L];const sd=SIDE[p[0]];const d1=DRK[p[1][0]],d2=DRK[p[1][1]];
- const lo=Math.min(d1[1],d2[1]),hi=Math.max(d1[1],d2[1]);const pr=lo===hi?eur(lo,L):eur(lo,L)+"–"+eur(hi,L);
- const base=d.p+sd[1];const soup=p[2];const tot=soup?eur(base,L):(lo===hi?eur(base+lo,L):eur(base+lo,L)+"–"+eur(base+hi,L));
- const dn=`${esc(nm(d1[0]))} ${t.orw} ${esc(nm(d2[0]))}`;const why=p[3+LI[L]];
- const sc=p[0].replace("s",""),ss=p[0].endsWith("s")?"s":"";          // 小菜：菜号 + 是否小份
- const sk=ss?sc+"|"+ss:sc;
- const k1=DRKMAP[p[1][0]],k2=DRKMAP[p[1][1]];
- const drow=(k,x)=>`<li><span>+ ${esc(nm(x[0]))}</span><span>+${eur(x[1],L)}</span>${stepper(k,`data-dr="${k}"`)}</li>`;
- return `<div class="pair"><dt>${t.pairT}</dt><p>${esc(why)}</p><ul>
-  <li><span>${d.c} ${esc(L==="zh"?d.zh:d[L])}</span><span>${eur(d.p,L)}</span>${stepper(d.c,`data-c="${d.c}"`)}</li>
-  <li><span>+ ${sc} ${esc(nm(sd[0]))}</span><span>+${eur(sd[1],L)}</span>${stepper(sk,`data-c="${sc}" data-sz="${ss}"`)}</li>
-  ${soup?"":drow(k1,d1)+drow(k2,d2)}
-  <li class="tot"><span>${soup?t.soupTotal:t.total}</span><span>${tot}</span></li></ul>
-  <button class="obtn combo" type="button" data-combo="${d.c};${sk};${soup?"":k1}">${esc(ct.combo)}</button>
-  ${soup?`<small>${t.coldQ} ${dn}, ${pr}.</small>`:""}<small>${t.pairNote}</small></div>`}
+let DRPICK={};
+function pairBox(d){
+  const p=PR[d.c];if(!p)return "";
+  const t=T[L],ct=CT[L],sd=SIDE[p[0]],soup=p[2];
+  const sc=p[0].replace("s",""),ss=p[0].endsWith("s")?"s":"";       // 小菜：菜号 + 是否小份
+  const sk=ss?sc+"|"+ss:sc;
+  const ks=[p[1][0],p[1][1]];                                        // 推荐的两种饮料
+  const pick=DRPICK[d.c]||"";                                        // 客人选的那种，默认不要
+  const tot=d.p+sd[1]+(pick?DRK[pick][1]:0);
+  const pc=(k,label,on)=>`<button class="chip" type="button" data-pick="${d.c}|${k}" aria-pressed="${on}">${esc(label)}</button>`;
+  const why=p[3+LI[L]];
+  return `<div class="pair"><dt>${t.pairT}</dt><p>${esc(why)}</p><ul>
+   <li><span>${d.c} ${esc(L==="zh"?d.zh:d[L])}</span><span>${eur(d.p,L)}</span>${stepper(d.c,`data-c="${d.c}"`)}</li>
+   <li><span>+ ${sc} ${esc(nm(sd[0]))}</span><span>+${eur(sd[1],L)}</span>${stepper(sk,`data-c="${sc}" data-sz="${ss}"`)}</li>
+   </ul>
+   <div class="opt"><span class="qlab">${ct.drinkPick}</span>${pc("",ct.noDrink,!pick)}${ks.map(k=>pc(k,nm(DRK[k][0])+" +"+eur(DRK[k][1],L),pick===k)).join("")}</div>
+   <div class="pairtot"><span>${soup&&!pick?t.soupTotal:t.total}</span><b>${eur(tot,L)}</b></div>
+   <button class="obtn combo" type="button" data-combo="${d.c};${sk};${pick?DRKMAP[pick]+"|"+pick:""}">${esc(ct.combo)}</button>
+   <small>${t.pairNote}</small></div>`}
 function render(){
   const t=T[L]; document.documentElement.lang=L==="zh"?"zh-CN":L;
   $("tagline").textContent=t.tagline; $("h-eye").textContent=t.eye; $("h-title").textContent=t.title;
@@ -110,7 +114,7 @@ function openDet(c){
    <div class="in"><h3>${esc(L==="zh"?d.zh:d[L])}</h3><div class="meta"><span>${d.c} · ${esc(L==="zh"?d.es:d.zh)}</span><b>${price}</b></div>
    <div id="detbuy">${buyBlock(c)}</div>
    <div class="algbox"><dt>${lb.alg}</dt>${algRow(d.al)}</div>
-   <dl>${rows}</dl>${pairBox(d)}</div>`;
+   <dl>${rows}</dl><div id="detpair">${pairBox(d)}</div></div>`;
   DETC=c;sh.hidden=false;$("scrim").hidden=false;document.body.style.overflow="hidden";$("close").focus();
   $("close").onclick=closeDet;
 }
@@ -123,8 +127,11 @@ document.addEventListener("click",e=>{
     const[dc,sk,dk]=cb.dataset.combo.split(";");
     cartBump(dc,1,{c:dc});
     cartBump(sk,1,{c:sk.split("|")[0],sz:sk.split("|")[1]||""});
-    if(dk)cartBump(dk,1,{dr:dk});
+    if(dk){const[row,dv]=dk.split("|");cartBump(dk,1,{dr:row,dv:dv})}
     return}
+  const pk=e.target.closest("[data-pick]");
+  if(pk){e.preventDefault();const[c,k]=pk.dataset.pick.split("|");
+    DRPICK[c]=k||"";if($("detpair"))$("detpair").innerHTML=pairBox(findDish(c));return}
   const op=e.target.closest("[data-opt]");
   if(op){e.preventDefault();const[kind,c,i]=op.dataset.opt.split("|");setOpt(kind,c,+i);return}
   const r=e.target.closest("[data-det]");if(r)openDet(r.dataset.det);
@@ -172,7 +179,7 @@ const stepper=(k,data)=>{const q=CART[k]?CART[k].q:0;
   return `<span class="qty${q?" has":""}" data-k="${k}"><button class="qbtn" type="button" data-q="-1" data-k="${k}" aria-label="−">−</button><span class="qn">${q}</span><button class="qbtn add" type="button" data-q="1" data-k="${k}" ${data||""} aria-label="＋">＋</button></span>`};
 const exList=c=>((OPT[c]||{}).ex||[]);
 const exSum=c=>exList(c).reduce((n,i)=>n+EXTRAS[i][1],0);
-const itPrice=it=>it.dr?DRINK[it.dr][1]:((it.sz==="l"?findDish(it.c).p2:findDish(it.c).p)+(it.sz?0:exSum(it.c)));
+const itPrice=it=>it.dr?(it.dv?DRK[it.dv][1]:DRINK[it.dr][1]):((it.sz==="l"?findDish(it.c).p2:findDish(it.c).p)+(it.sz?0:exSum(it.c)));
 // 这道菜选了什么：辣度（黄焖锅一定写出来）、不要香菜、加配菜
 function optTxt(it,l){
   if(it.dr||it.sz)return [];
@@ -197,7 +204,7 @@ function buyBlock(c){
     :stepper(c,`data-c="${c}"`);
   return `<div class="buy">${optUI(c)}<div class="buyrow"><span class="qlab">${esc(CT[L].pick)}</span><span class="buyq">${q}</span></div></div>`}
 function itName(it,l){
-  if(it.dr)return drName(DRINK[it.dr],l);
+  if(it.dr)return it.dv?DRK[it.dv][0][LI[l]]:drName(DRINK[it.dr],l);
   const d=findDish(it.c);let n=l==="zh"?d.zh:d[l];
   if(it.sz)n+=l==="zh"?"（"+SZ.zh[it.sz]+"）":" ("+SZ[l][it.sz]+")";
   return n}
@@ -209,7 +216,7 @@ const zhLines=()=>cKeys().map(k=>{const it=CART[k];
 function cartBump(k,n,ds){
   let it=CART[k];
   if(!it){if(n<0)return;
-    it=CART[k]=ds&&ds.dr?{dr:ds.dr,q:0}:{c:ds.c,q:0};
+    it=CART[k]=ds&&ds.dr?(ds.dv?{dr:ds.dr,dv:ds.dv,q:0}:{dr:ds.dr,q:0}):{c:ds.c,q:0};
     if(ds&&ds.sz)it.sz=ds.sz}
   it.q=Math.min(99,it.q+n);
   if(it.q<1)delete CART[k];
@@ -232,7 +239,8 @@ function syncCart(){
     b.setAttribute("aria-pressed",kind==="sp"?(o.sp||0)===+i:kind==="nc"?!!o.nc:exList(c).includes(+i))});
   $("cartbar").hidden=!n;document.body.classList.toggle("hascart",!!n);
   if(n){$("cb-n").textContent=ct.items.replace("%s",n);$("cb-t").textContent=eur(cTotal(),L);$("cb-go").textContent=ct.view}
-  if(!$("sheet").hidden&&DETC&&$("detbuy"))$("detbuy").innerHTML=buyBlock(DETC);
+  if(!$("sheet").hidden&&DETC&&$("detbuy")){$("detbuy").innerHTML=buyBlock(DETC);
+    if($("detpair"))$("detpair").innerHTML=pairBox(findDish(DETC))}
   if(!$("order").hidden)renderOrder();
   if(!$("staff").hidden)renderStaff();
 }
