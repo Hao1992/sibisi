@@ -115,19 +115,24 @@ function openDet(c){
    <div id="detbuy">${buyBlock(c)}</div>
    <div class="algbox"><dt>${lb.alg}</dt>${algRow(d.al)}</div>
    <dl>${rows}</dl><div id="detpair">${pairBox(d)}</div></div>`;
-  DETC=c;sh.hidden=false;$("scrim").hidden=false;document.body.style.overflow="hidden";$("close").focus();
+  DETC=c;sh.hidden=false;$("scrim").hidden=false;document.body.classList.add("detailing");
+  document.body.style.overflow="hidden";$("close").focus();
   $("close").onclick=closeDet;
 }
-function closeDet(){DETC=null;$("sheet").hidden=true;$("scrim").hidden=true;document.body.style.overflow=""}
+function closeDet(){DETC=null;$("sheet").hidden=true;$("scrim").hidden=true;
+  document.body.classList.remove("detailing");document.body.style.overflow=""}
 document.addEventListener("click",e=>{
   const q=e.target.closest("[data-q]");
-  if(q){e.preventDefault();cartBump(q.dataset.k,+q.dataset.q,q.dataset);return}
+  if(q){e.preventDefault();cartBump(q.dataset.k,+q.dataset.q,q.dataset);
+    if(+q.dataset.q>0)flyToCart(q);
+    return}
   const cb=e.target.closest("[data-combo]");
   if(cb){e.preventDefault();
     const[dc,sk,dk]=cb.dataset.combo.split(";");
     cartBump(dc,1,{c:dc});
     cartBump(sk,1,{c:sk.split("|")[0],sz:sk.split("|")[1]||""});
     if(dk){const[row,dv]=dk.split("|");cartBump(dk,1,{dr:row,dv:dv})}
+    flyToCart(cb);
     return}
   const pk=e.target.closest("[data-pick]");
   if(pk){e.preventDefault();const[c,k]=pk.dataset.pick.split("|");
@@ -227,6 +232,24 @@ function setOpt(kind,c,i){
   else if(kind==="nc")o.nc=!o.nc;
   else{const a=o.ex||(o.ex=[]),p=a.indexOf(i);p<0?a.push(i):a.splice(p,1);a.sort((x,y)=>x-y)}
   cartSave();syncCart()}
+function flyToCart(btn){
+  if(!btn||matchMedia("(prefers-reduced-motion:reduce)").matches)return;
+  btn.classList.remove("tap");void btn.offsetWidth;btn.classList.add("tap");
+  const bar=$("cartbar"),b=btn.getBoundingClientRect();
+  const dish=btn.closest(".dish"),img=dish&&dish.querySelector(".thumb img");
+  const el=document.createElement("div");
+  el.className="fly";
+  if(img)el.style.backgroundImage=`url("${img.src}")`;
+  el.style.left=(b.left+b.width/2-19)+"px";
+  el.style.top=(b.top+b.height/2-19)+"px";
+  document.body.appendChild(el);
+  const t=bar.hidden?null:bar.getBoundingClientRect();
+  const tx=t?t.left+40:innerWidth/2, ty=t?t.top+t.height/2:innerHeight-40;
+  const go=()=>{el.style.transform=`translate(${tx-(b.left+b.width/2)}px,${ty-(b.top+b.height/2)}px) scale(.3)`;
+    el.style.opacity=".2"};
+  requestAnimationFrame(go);setTimeout(go,40);   // 后台标签页里 rAF 会被掐掉，补一个定时器
+  setTimeout(()=>el.remove(),600);
+  if(!bar.hidden){bar.classList.remove("pop");void bar.offsetWidth;bar.classList.add("pop")}}
 function syncCart(){
   const ct=CT[L],n=cCount();
   document.querySelectorAll("[data-k]").forEach(el=>{
@@ -280,8 +303,10 @@ function renderStaff(){
 }
 const orderText=()=>["Sibisi Ramen"].concat(zhLines().map(x=>`${x.n}${x.o?"（"+x.o+"）":""} ×${x.q}`),
   [`共 ${cCount()} 份　${eur(cTotal(),"es")}`]).join("\n");
-function openOrder(){renderOrder();$("order").hidden=false;$("scrim").hidden=false;document.body.style.overflow="hidden"}
-function closeOrder(){$("order").hidden=true;$("scrim").hidden=true;document.body.style.overflow=""}
+function openOrder(){renderOrder();$("order").hidden=false;$("scrim").hidden=false;
+  document.body.classList.add("ordering");document.body.style.overflow="hidden"}
+function closeOrder(){$("order").hidden=true;$("scrim").hidden=true;
+  document.body.classList.remove("ordering");document.body.style.overflow=""}
 function openStaff(){renderStaff();$("staff").hidden=false;document.body.style.overflow="hidden"}
 function closeStaff(){$("staff").hidden=true;document.body.style.overflow=$("order").hidden?"":"hidden"}
 $("cb-go").addEventListener("click",openOrder);
