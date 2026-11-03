@@ -176,3 +176,30 @@ PR = {
  "5-5": ["6-2", ["rd", "ne"], 0, "油泼面香辣，配凉拌黄瓜降温，饮料来一瓶柠檬啤酒或冰红茶。全素搭配。", "Aceite de chile, pepino para refrescar y una Radler o un Nestea. Combinación vegana.", "Chilli oil, cool cucumber and a Radler or Nestea. A vegan combo."],
  "7-1": ["6-1", ["am", "cc"], 0, "酱油炒饭配一份五香牛肉，再来一瓶冰 Amstel 或可乐，简单的快乐。", "Arroz frito, ternera a las cinco especias y una Amstel o Coca-Cola fría: felicidad sencilla.", "Fried rice, five-spice beef and a cold Amstel or Coke: simple happiness."],
 }
+
+# --- 点单（购物车）---------------------------------------------------------
+# 辣度（只用于黄焖锅 1-x），顺序即菜单上的顺序，默认第一个
+SP = [["不辣", "Sin picante", "None"], ["微辣", "Suave", "Mild"],
+      ["中辣", "Medio", "Medium"], ["特辣", "Muy picante", "Extra hot"]]
+
+# 购物车界面文字。中文块（给店员看的那部分）不走这里，固定中文写在 app.js.tpl 里。
+CT = {
+ "zh": dict(view="查看我的单子", title="我的单子", items="%s 份", total="合计",
+   spice="辣度", staff="给店员看 ›", copy="复制", copied="已复制", clear="清空", back="继续点菜",
+   empty="还没有选菜。在菜单上点 ＋ 就可以加进来。",
+   notOrder="这是一份清单，还没有下单。选好后把手机给店员看就行。",
+   priceNote="价格仅供参考，最终以店员确认为准。",
+   staffNote="客人自己选的，还没下单"),
+ "es": dict(view="Ver mi pedido", title="Mi pedido", items="%s platos", total="Total",
+   spice="Picante", staff="Enseñar al personal ›", copy="Copiar", copied="Copiado", clear="Vaciar", back="Seguir pidiendo",
+   empty="Aún no has elegido nada. Pulsa ＋ en cualquier plato para añadirlo.",
+   notOrder="Esto es solo una lista: el pedido todavía no está hecho. Cuando lo tengas, enséñaselo al personal.",
+   priceNote="Precios orientativos; el personal confirma el total.",
+   staffNote="Lista hecha por el cliente, aún sin pedir"),
+ "en": dict(view="View my order", title="My order", items="%s items", total="Total",
+   spice="Spice", staff="Show to staff ›", copy="Copy", copied="Copied", clear="Clear", back="Keep choosing",
+   empty="Nothing chosen yet. Tap ＋ on any dish to add it.",
+   notOrder="This is just a list — nothing has been ordered yet. When you're ready, show it to our staff.",
+   priceNote="Prices are a guide; staff confirm the total.",
+   staffNote="Lista hecha por el cliente, aún sin pedir"),
+}

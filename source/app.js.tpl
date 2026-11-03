@@ -10,6 +10,8 @@ const SIDE=__SIDE__;
 const DRK=__DRK__;
 const PR=__PR__;
 const DET=__DET__;
+const CT=__CT__;
+const SP=__SP__;
 const LI={zh:0,es:1,en:2};
 const eur=(n,l)=>l==="en"?"€"+n.toFixed(2):n.toFixed(2).replace(".",",")+" €";
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -68,9 +70,14 @@ function render(){
       else if(f.includes("v"))tags+=`<span class="tag veg">${t.veg}</span>`;
       const taste=d.ta.map(k=>{const hot=k==="picante"||k==="mala";return `<span class="tt${hot?" hotx":""}">${hot?"🌶 ":""}${esc(nm(TASTE[k]))}</span>`}).join("");
       const det=DET[d.c]?` data-det="${d.c}" tabindex="0" role="button"`:"";
+      const qty=d.p2
+        ?`<div class="qty2"><span class="qlab">${SZ[L].s}</span>${stepper(d.c+"|s",`data-c="${d.c}" data-sz="s"`)}</div>
+           <div class="qty2"><span class="qlab">${SZ[L].l}</span>${stepper(d.c+"|l",`data-c="${d.c}" data-sz="l"`)}</div>`
+        :stepper(d.c,`data-c="${d.c}"`);
+      const spice=s.id==="hm"?`<div class="spice"><span class="qlab">${CT[L].spice}</span>${SP.map((x,i)=>`<button class="chip" type="button" data-sp="${d.c}|${i}" aria-pressed="${i===(SPICE[d.c]||0)}">${esc(x[LI[L]])}</button>`).join("")}</div>`:"";
       const price=d.p2?`<span class="pz">${L==="zh"?"小":L==="en"?"S":"P"}</span> ${eur(d.p,L)}<br><span class="pz">${L==="zh"?"大":L==="en"?"L":"G"}</span> ${eur(d.p2,L)}`:eur(d.p,L);
       h+=`<div class="dish" id="d-${d.c}"${det}><div class="thumb">${d.img?`<img src="img/${d.img}.jpg" alt="" loading="lazy">`:illo(d.c,"")}<span class="badge">${d.c}</span></div>
-        <div class="t"><h4>${esc(name)}</h4><div class="zhn">${esc(sub)}</div>${desc?`<p>${esc(desc)}</p>`:""}${taste?`<div class="taste">${taste}</div>`:""}${tags?`<div class="tags">${tags}</div>`:""}${algRow(d.al,true)}${pairLine(d)}${DET[d.c]?`<span class="more">${t.more}</span>`:""}</div>
+        <div class="t"><h4>${esc(name)}</h4><div class="zhn">${esc(sub)}</div>${desc?`<p>${esc(desc)}</p>`:""}${taste?`<div class="taste">${taste}</div>`:""}${tags?`<div class="tags">${tags}</div>`:""}${algRow(d.al,true)}${pairLine(d)}${DET[d.c]?`<span class="more">${t.more}</span>`:""}${spice}<div class="qwrap">${qty}</div></div>
         <div class="price">${price}</div></div>`;
     }
     h+=`</div>`;
@@ -78,9 +85,10 @@ function render(){
     h+=`</section>`;
   }
   h+=`<section id="bebidas"><div class="sh"><h3>${t.drinks}</h3>${L==="zh"?"":'<span class="zh">酒水</span>'}</div><div class="drinks">`;
-  for(const k of ["beers","wine","soft","water"])h+=`<div><h5>${t[k]}</h5><ul>${DR[k].map(x=>`<li><span>${esc(typeof x[0]==="string"?x[0]:nm(x[0]))}</span><span>${eur(x[1],L)}</span></li>`).join("")}</ul></div>`;
+  for(const k of ["beers","wine","soft","water"])h+=`<div><h5>${t[k]}</h5><ul>${DR[k].map((x,i)=>{const id=`dr-${k}-${i}`;return `<li><span>${esc(drName(x,L))}</span><span class="dr-r">${eur(x[1],L)}${stepper(id,`data-dr="${id}"`)}</span></li>`}).join("")}</ul></div>`;
   h+=`</div></section>`;
   $("menu").innerHTML=h;
+  syncCart();
   spy();
 }
 function openDet(c){
@@ -97,8 +105,20 @@ function openDet(c){
   $("close").onclick=closeDet;
 }
 function closeDet(){$("sheet").hidden=true;$("scrim").hidden=true;document.body.style.overflow=""}
-document.addEventListener("click",e=>{const r=e.target.closest("[data-det]");if(r)openDet(r.dataset.det);else if(e.target.id==="scrim")closeDet()});
-document.addEventListener("keydown",e=>{if(e.key==="Escape")closeDet();const r=e.target.closest&&e.target.closest("[data-det]");if(r&&(e.key==="Enter"||e.key===" ")){e.preventDefault();openDet(r.dataset.det)}});
+document.addEventListener("click",e=>{
+  const q=e.target.closest("[data-q]");
+  if(q){e.preventDefault();cartBump(q.dataset.k,+q.dataset.q,q.dataset);return}
+  const sp=e.target.closest("[data-sp]");
+  if(sp){e.preventDefault();const[c,i]=sp.dataset.sp.split("|");setSpice(c,+i);return}
+  const r=e.target.closest("[data-det]");if(r)openDet(r.dataset.det);
+  else if(e.target.id==="scrim"){closeDet();closeOrder()}
+});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"){if(!$("staff").hidden)closeStaff();else if(!$("order").hidden)closeOrder();else closeDet()}
+  if(e.target.closest&&e.target.closest("[data-q],[data-sp]"))return;
+  const r=e.target.closest&&e.target.closest("[data-det]");
+  if(r&&(e.key==="Enter"||e.key===" ")){e.preventDefault();openDet(r.dataset.det)}
+});
 function setLang(l){L=l;try{localStorage.setItem("lang",l)}catch(e){}render()}
 document.querySelectorAll(".lang button").forEach(b=>b.addEventListener("click",()=>setLang(b.dataset.l)));
 $("copy").addEventListener("click",e=>{
@@ -113,6 +133,94 @@ function spy(){
   obs=new IntersectionObserver(es=>{es.forEach(en=>{if(en.isIntersecting){document.querySelectorAll(".rail a").forEach(a=>{const on=a.dataset.s===en.target.id;a.classList.toggle("on",on);if(on){a.parentNode.scrollLeft=a.offsetLeft-16}})}})},{rootMargin:"-30% 0px -60% 0px"});
   document.querySelectorAll("main section").forEach(s=>obs.observe(s));
 }
+/* ---------- 点单（购物车）：状态在本机，不发给任何服务器 ---------- */
+const SZ={zh:{s:"小",l:"大"},es:{s:"P",l:"G"},en:{s:"S",l:"L"}};
+const DRINK={};
+for(const g of ["beers","wine","soft","water"])DR[g].forEach((x,i)=>{DRINK["dr-"+g+"-"+i]=x});
+const drName=(x,l)=>typeof x[0]==="string"?x[0]:x[0][LI[l]];
+const CKEY="sibisi.cart";
+let CART={},SPICE={};
+function cartSave(){try{localStorage.setItem(CKEY,JSON.stringify({t:Date.now(),c:CART,s:SPICE}))}catch(e){}}
+(function(){try{const r=JSON.parse(localStorage.getItem(CKEY)||"null");
+ if(r&&Date.now()-r.t<6*36e5){CART=r.c||{};SPICE=r.s||{}}}catch(e){}})();
+const stepper=(k,data)=>{const q=CART[k]?CART[k].q:0;
+  return `<span class="qty${q?" has":""}" data-k="${k}"><button class="qbtn" type="button" data-q="-1" data-k="${k}" aria-label="−">−</button><span class="qn">${q}</span><button class="qbtn add" type="button" data-q="1" data-k="${k}" ${data||""} aria-label="＋">＋</button></span>`};
+const itPrice=it=>it.dr?DRINK[it.dr][1]:(it.sz==="l"?findDish(it.c).p2:findDish(it.c).p);
+function itName(it,l){
+  if(it.dr)return drName(DRINK[it.dr],l);
+  const d=findDish(it.c);let n=l==="zh"?d.zh:d[l];
+  if(it.sz)n+=l==="zh"?"（"+SZ.zh[it.sz]+"）":" ("+SZ[l][it.sz]+")";
+  return n}
+const cKeys=()=>Object.keys(CART);
+const cCount=()=>cKeys().reduce((n,k)=>n+CART[k].q,0);
+const cTotal=()=>cKeys().reduce((n,k)=>n+CART[k].q*itPrice(CART[k]),0);
+const zhLines=()=>cKeys().map(k=>{const it=CART[k];
+  return {n:itName(it,"zh"),q:it.q,o:it.sp!=null?SP[it.sp][0]:""}});
+function cartBump(k,n,ds){
+  let it=CART[k];
+  if(!it){if(n<0)return;
+    it=CART[k]=ds&&ds.dr?{dr:ds.dr,q:0}:{c:ds.c,q:0};
+    if(ds&&ds.sz)it.sz=ds.sz;
+    if(it.c&&findDish(it.c)&&SPICE[it.c]!=null)it.sp=SPICE[it.c]}
+  it.q=Math.min(99,it.q+n);
+  if(it.q<1)delete CART[k];
+  cartSave();syncCart()}
+function setSpice(c,i){SPICE[c]=i;if(CART[c])CART[c].sp=i;cartSave();syncCart()}
+function syncCart(){
+  const ct=CT[L],n=cCount();
+  document.querySelectorAll("[data-k]").forEach(el=>{
+    const q=CART[el.dataset.k]?CART[el.dataset.k].q:0;
+    el.classList.toggle("has",q>0);
+    const o=el.querySelector(".qn");if(o)o.textContent=q});
+  document.querySelectorAll("#menu .dish").forEach(el=>{const c=el.id.slice(2);
+    el.classList.toggle("picked",!!(CART[c]||CART[c+"|s"]||CART[c+"|l"]))});
+  document.querySelectorAll("[data-sp]").forEach(b=>{const[c,i]=b.dataset.sp.split("|");
+    b.setAttribute("aria-pressed",(SPICE[c]||0)===+i)});
+  $("cartbar").hidden=!n;document.body.classList.toggle("hascart",!!n);
+  if(n){$("cb-n").textContent=ct.items.replace("%s",n);$("cb-t").textContent=eur(cTotal(),L);$("cb-go").textContent=ct.view}
+  if(!$("order").hidden)renderOrder();
+  if(!$("staff").hidden)renderStaff();
+}
+function renderOrder(){
+  const ct=CT[L],ks=cKeys();
+  const rows=ks.map(k=>{const it=CART[k];
+    return `<li><div class="on-n">${esc(itName(it,L))}${it.sp!=null?`<em class="on-o">${esc(SP[it.sp][LI[L]])}</em>`:""}</div>
+      ${stepper(k)}<div class="on-p">${eur(it.q*itPrice(it),L)}</div></li>`}).join("");
+  const zh=zhLines().map(x=>`<div class="zhrow"><span class="zhn2">${esc(x.n)}${x.o?" · "+x.o:""}</span><span>×${x.q}</span></div>`).join("");
+  $("order").innerHTML=`<div class="in">
+    <div class="orow"><h3>${esc(ct.title)}</h3><button class="xbtn" type="button" id="oclose" aria-label="${esc(ct.back)}">×</button></div>
+    ${ks.length?`<div class="warn">${esc(ct.notOrder)}</div>
+    <ul class="olist">${rows}</ul>
+    <div class="otot"><span>${esc(ct.total)}</span><b>${eur(cTotal(),L)}</b></div>
+    <div class="ohint">${esc(ct.priceNote)}</div>
+    <div class="zhbox"><dt>给店员看 · 中文</dt>${zh}
+      <div class="zhrow zhsum"><span>共 ${cCount()} 份</span><span>${eur(cTotal(),"es")}</span></div></div>
+    <div class="oact"><button class="obtn" type="button" id="ostaff">${esc(ct.staff)}</button>
+      <button class="obtn sec" type="button" id="ocopy">${esc(ct.copy)}</button>
+      <button class="obtn sec" type="button" id="oclear">${esc(ct.clear)}</button></div>`
+    :`<p class="ohint">${esc(ct.empty)}</p>`}
+  </div>`;
+  $("oclose").onclick=closeOrder;
+  if(!ks.length)return;
+  $("ostaff").onclick=openStaff;
+  $("oclear").onclick=()=>{CART={};cartSave();syncCart()};
+  $("ocopy").onclick=e=>{const b=e.currentTarget;
+    const done=()=>{b.textContent=CT[L].copied;setTimeout(()=>{if(!$("order").hidden)b.textContent=CT[L].copy},1500)};
+    try{navigator.clipboard.writeText(orderText()).then(done,()=>{})}catch(_){}};
+}
+function renderStaff(){
+  $("staff").innerHTML=`<div class="sx"><span>${esc(CT[L].staffNote)}</span><button type="button" id="sclose" aria-label="关闭">×</button></div>
+   <ul>${zhLines().map(x=>`<li><span>${esc(x.n)}${x.o?`<em>${x.o}</em>`:""}</span><b>×${x.q}</b></li>`).join("")}</ul>
+   <div class="stot"><span>共 ${cCount()} 份</span><b>${eur(cTotal(),"es")}</b></div>`;
+  $("sclose").onclick=closeStaff;
+}
+const orderText=()=>["Sibisi Ramen"].concat(zhLines().map(x=>`${x.n}${x.o?"（"+x.o+"）":""} ×${x.q}`),
+  [`共 ${cCount()} 份　${eur(cTotal(),"es")}`]).join("\n");
+function openOrder(){renderOrder();$("order").hidden=false;$("scrim").hidden=false;document.body.style.overflow="hidden"}
+function closeOrder(){$("order").hidden=true;$("scrim").hidden=true;document.body.style.overflow=""}
+function openStaff(){renderStaff();$("staff").hidden=false;document.body.style.overflow="hidden"}
+function closeStaff(){$("staff").hidden=true;document.body.style.overflow=$("order").hidden?"":"hidden"}
+$("cb-go").addEventListener("click",openOrder);
 (function(){let l=null;try{l=localStorage.getItem("lang")}catch(e){}
  if(!l){const n=(navigator.language||"es").slice(0,2);l=n==="zh"?"zh":(n==="es"||n==="ca")?"es":"en"}
  L=T[l]?l:"es";render()})();
