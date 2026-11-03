@@ -64,7 +64,6 @@ section{scroll-margin-top:64px;padding-top:22px}
 .thumb .num{font-size:18px;color:var(--ink)}
 .taste{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
 .tt.hotx{color:var(--red);border-color:var(--red-soft);background:var(--red-soft)}
-.first a.c{text-decoration:none}
 .price{text-align:right;line-height:1.5}
 .pz{font-size:11px;font-weight:700;color:var(--muted)}
 .pairl{margin-top:6px;font-size:12.5px;font-weight:600;color:var(--muted);border:1px dashed var(--line);border-radius:10px;padding:5px 9px;width:fit-content;max-width:100%}
@@ -113,8 +112,15 @@ section{scroll-margin-top:64px;padding-top:22px}
 .first{margin-top:12px;border:1.5px dashed var(--red);border-radius:16px;padding:12px 14px;display:grid;gap:8px}
 .first b{font-size:14px}
 .first ul{list-style:none;margin:0;padding:0;display:grid;gap:6px;font-size:13.5px}
-.first li{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center}
-.first .c{font-weight:800;background:var(--yellow);color:var(--yellow-ink);border-radius:6px;padding:0 6px;font-variant-numeric:tabular-nums}
+.first li{display:grid;grid-template-columns:56px 1fr auto;gap:10px;align-items:center}
+.first li[data-det]{cursor:pointer}
+.first .thumb{width:56px;height:56px;border-radius:12px}
+.first .thumb .badge{left:3px;bottom:3px;font-size:10px;padding:0 4px}
+.first .ft{min-width:0}
+.first .ft h4{margin:0;font-size:14.5px;font-weight:800;line-height:1.25}
+.first .ft em{display:block;margin-top:1px;font-style:normal;font-size:12.5px;color:var(--muted)}
+.first .fr{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.first .fr b{font-size:14px;font-variant-numeric:tabular-nums}
 .dish .t{min-width:0}
 .dish h4{margin:0;font-size:15.5px;font-weight:800;line-height:1.25}
 .dish .zhn{font-family:var(--f-zh);font-size:13px;color:var(--muted)}
@@ -138,6 +144,12 @@ section{scroll-margin-top:64px;padding-top:22px}
 .foot .phone{font-weight:800;font-size:18px;user-select:all;font-variant-numeric:tabular-nums}
 .copy{border:1px solid var(--line);background:var(--chip);color:var(--ink);font:700 13px var(--f-body);border-radius:999px;padding:6px 12px;cursor:pointer}
 .legend{color:var(--muted);font-size:12.5px}
+.foot .phone{color:var(--ink);text-decoration:none}
+.flink{color:var(--red);font-weight:800;font-size:13.5px;text-decoration:none;white-space:nowrap}
+.addon{border:1.5px dashed var(--red);border-radius:14px;padding:11px 12px;display:grid;gap:8px}
+.addon b{font-size:13.5px}
+.addon .opt{display:flex;flex-wrap:wrap;gap:6px;margin:0}
+.addon .chip{font-size:13px;padding:8px 12px;color:var(--ink);font-weight:800}
 /* --- 点单：卡片上的加减、底部浮条、订单页、店员大字页 --- */
 .qty{display:inline-flex;align-items:center;justify-content:flex-end;gap:6px}
 .qwrap{display:flex;flex-direction:column;align-items:flex-end;gap:5px;margin-top:9px}
@@ -150,6 +162,13 @@ section{scroll-margin-top:64px;padding-top:22px}
 
 .qty2{display:flex;align-items:center;gap:6px}
 .qlab{font-size:11.5px;font-weight:800;color:var(--muted)}
+.fbar{display:flex;align-items:center;gap:6px;margin:10px -16px 0;padding:2px 16px 4px;overflow-x:auto;scrollbar-width:none}
+.fbar::-webkit-scrollbar{display:none}
+.fbar>*{flex:none}
+.fbar .chip{font-size:13px;padding:7px 12px}
+.fbar .chip.clr{border-style:dashed;color:var(--red);border-color:var(--red)}
+.fbar .fcount{font-size:12.5px;font-weight:700;color:var(--muted)}
+.fempty{margin:22px 0;color:var(--muted);font-size:14px}
 .spice,.opt{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:8px}
 .buy{background:var(--chip);border-radius:14px;padding:10px 12px;display:grid;gap:2px}
 .buy .opt{margin-top:6px}
@@ -258,6 +277,7 @@ body.ordering .cartbar{display:none}
   <div class="promise" id="promise"></div>
 
   <nav class="rail" id="rail"></nav>
+  <div class="fbar" id="filters"></div>
   <main id="menu"></main>
   <div class="scrim" id="scrim" hidden></div>
   <div class="sheet" id="sheet" role="dialog" aria-modal="true" hidden></div>
@@ -270,8 +290,9 @@ body.ordering .cartbar{display:none}
   </div>
 
   <footer class="foot">
-    <div class="row"><div><div class="legend" id="f-take"></div><div class="phone" id="phone">671 343 226</div></div><button class="copy" id="copy"></button></div>
-    <div>C/ de Julio Antonio, 24 · 46007 València</div>
+    <div class="row"><div><div class="legend" id="f-take"></div><a class="phone" id="phone" href="tel:+34671343226">671 343 226</a></div><button class="copy" id="copy"></button></div>
+    <div class="row"><div>C/ de Julio Antonio, 24 · 46007 València</div><a class="flink" id="f-dirs" target="_blank" rel="noopener"></a></div>
+    <div class="row"><a class="flink" id="f-rev" target="_blank" rel="noopener"></a></div>
     <div class="legend" id="f-all"></div>
   </footer>
 </div>

@@ -14,6 +14,8 @@ T = {
   promise=[["面", "我们的手工面，每一根都用小麦粉在店里制作（不是米粉）"], ["酱", "酱汁和汤底由店里按自家配方现调"], ["鲜", "手工面和黄焖锅不用预制，每一碗现点现做"]],
   more="查看详细介绍 ›", pairWith="可另点（另收费）：", orw="或", pairT="推荐加点（另收费，不含在主食里）", total="加点后合计", soupTotal="面 + 小菜合计",
   coldQ="想喝点冰的？", pairNote="以上小菜和饮料不含在主食价格里，需要另外点、另外付费。想加的话，点单时告诉店员菜号就行。", illo="示意图 · 实拍照片待补", close="关闭",
+  dirs="怎么走 ›", rev="在 Google 上给我们评价 ›", call="拨打",
+  fT="挑菜", fNo="不辣", fWo="不含%s", fCount="%s 道菜", fClear="清除", fEmpty="没有同时满足这些条件的菜。少选一个条件试试，或者直接问店员。",
   adj="辣度：不辣、微辣、中辣、特辣（默认不辣）。加配菜另收费：土豆 +1,00 €，油菜 +1,20 €，白蘑菇 +1,60 €，金针菇 +1,60 €，米饭 +1,70 €。加辣用的辣椒油含芝麻。",
   pot="砂锅端上桌时还在咕嘟冒泡，这是黄焖锅最好吃的时刻。小心别碰锅边。先吃配菜，再把汤汁浇在米饭上拌着吃。"),
  "es": dict(tagline="Cocina china casera · 中餐", eye="Nuestro plato estrella", title="Estofado de pollo Huangmen",
@@ -28,6 +30,8 @@ T = {
   promise=[["面", "Nuestros fideos caseros, hechos a mano en el local con harina de trigo (no son de arroz)"], ["酱", "Salsas y caldos preparados aquí con nuestra receta"], ["鲜", "Fideos caseros y ollas sin precocinados: cada plato se hace al momento"]],
   more="Ver detalles ›", pairWith="Para añadir (se paga aparte):", orw="o", pairT="Sugerencia para añadir (se paga aparte, no incluido)", total="Total si lo añades", soupTotal="Total fideos + entrante",
   coldQ="¿Algo fresquito para beber?", pairNote="El entrante y la bebida no están incluidos en el precio del plato: se piden y se pagan aparte. Si los quieres, dile los números al personal.", illo="Ilustración · foto real próximamente", close="Cerrar",
+  dirs="Cómo llegar ›", rev="Déjanos una reseña en Google ›", call="Llamar",
+  fT="Filtrar", fNo="Sin picante", fWo="Sin %s", fCount="%s platos", fClear="Quitar", fEmpty="No hay platos que cumplan todo esto. Prueba con un filtro menos, o pregúntanos.",
   adj="Nivel de picante: sin picante, suave, medio o muy picante (por defecto, sin picante). Extras con suplemento: patata +1,00 €, pak choi +1,20 €, champiñón +1,60 €, setas enoki +1,60 €, arroz +1,70 €. El aceite de chile que usamos para el picante lleva sésamo.",
   pot="La olla llega a la mesa todavía hirviendo: ese es el mejor momento. Cuidado, el borde quema. Empieza por los ingredientes y después echa la salsa sobre el arroz."),
  "en": dict(tagline="Home-style Chinese food · 中餐", eye="Our signature dish", title="Huangmen braised chicken pot",
@@ -42,6 +46,8 @@ T = {
   promise=[["面", "Our handmade noodles are made in-house from wheat flour (not rice noodles)"], ["酱", "Sauces and broths mixed here to our own recipe"], ["鲜", "Our handmade noodles and pots are never pre-cooked: every bowl is made to order"]],
   more="See details ›", pairWith="Optional add-ons (extra charge):", orw="or", pairT="Suggested add-ons (extra charge, not included)", total="Total with add-ons", soupTotal="Noodles + side total",
   coldQ="Fancy a cold drink?", pairNote="Sides and drinks are not included in the dish price: they are ordered and paid separately. To add them, just tell our staff the numbers.", illo="Illustration · real photo coming soon", close="Close",
+  dirs="Get directions ›", rev="Leave us a Google review ›", call="Call",
+  fT="Filter", fNo="Not spicy", fWo="No %s", fCount="%s dishes", fClear="Clear", fEmpty="No dishes match all of these. Try one filter fewer, or just ask us.",
   adj="Spice: none, mild, medium or extra hot (no spice by default). Extras at extra cost: potato +€1.00, pak choi +€1.20, button mushrooms +€1.60, enoki +€1.60, rice +€1.70. The chilli oil we use for spice contains sesame.",
   pot="The pot arrives still bubbling, which is the best moment to eat it. Careful, the rim is hot. Eat the toppings first, then spoon the sauce over your rice."),
 }
@@ -195,22 +201,31 @@ SP = [["不辣", "Sin picante", "None"], ["微辣", "Suave", "Mild"],
 
 # 购物车界面文字。中文块（给店员看的那部分）不走这里，固定中文写在 app.js.tpl 里。
 CT = {
- "zh": dict(sideL="小菜", otherSide="＋ 加小菜", pickDone="完成", otherDrink="＋ 加饮料", pickSide="加小菜", pickDrink="加饮料", pickNone="不要", drinkPick="饮料", noDrink="不要饮料", combo="这一套都加上", extras="加配菜", noCo="不要香菜", pick="加入我的单子", view="查看我的单子", title="我的单子", items="%s 份", total="合计",
+ "zh": dict(addT="还要加点什么吗？", addD="来杯喝的？", sideL="小菜", otherSide="＋ 加小菜", pickDone="完成", otherDrink="＋ 加饮料", pickSide="加小菜", pickDrink="加饮料", pickNone="不要", drinkPick="饮料", noDrink="不要饮料", combo="这一套都加上", extras="加配菜", noCo="不要香菜", pick="加入我的单子", view="查看我的单子", title="我的单子", items="%s 份", total="合计",
    spice="辣度", staff="给店员看 ›", copy="复制", copied="已复制", clear="清空", back="继续点菜",
    empty="还没有选菜。在菜单上点 ＋ 就可以加进来。",
    notOrder="这是一份清单，还没有下单。选好后把手机给店员看就行。",
    priceNote="价格仅供参考，最终以店员确认为准。",
    staffNote="客人自己选的，还没下单"),
- "es": dict(sideL="Entrante", otherSide="+ Entrante", pickDone="Hecho", otherDrink="+ Bebida", pickSide="Añadir entrante", pickDrink="Añadir bebida", pickNone="Ninguno", drinkPick="Bebida", noDrink="Sin bebida", combo="Añadir el combo", extras="Extras", noCo="Sin cilantro", pick="Añadir a mi pedido", view="Ver mi pedido", title="Mi pedido", items="%s platos", total="Total",
+ "es": dict(addT="¿Añades algo más?", addD="¿Algo para beber?", sideL="Entrante", otherSide="+ Entrante", pickDone="Hecho", otherDrink="+ Bebida", pickSide="Añadir entrante", pickDrink="Añadir bebida", pickNone="Ninguno", drinkPick="Bebida", noDrink="Sin bebida", combo="Añadir el combo", extras="Extras", noCo="Sin cilantro", pick="Añadir a mi pedido", view="Ver mi pedido", title="Mi pedido", items="%s platos", total="Total",
    spice="Picante", staff="Enseñar al personal ›", copy="Copiar", copied="Copiado", clear="Vaciar", back="Seguir pidiendo",
    empty="Aún no has elegido nada. Pulsa ＋ en cualquier plato para añadirlo.",
    notOrder="Esto es solo una lista: el pedido todavía no está hecho. Cuando lo tengas, enséñaselo al personal.",
    priceNote="Precios orientativos; el personal confirma el total.",
    staffNote="Lista hecha por el cliente, aún sin pedir"),
- "en": dict(sideL="Side", otherSide="+ Side", pickDone="Done", otherDrink="+ Drink", pickSide="Add a side", pickDrink="Add a drink", pickNone="None", drinkPick="Drink", noDrink="No drink", combo="Add this combo", extras="Extras", noCo="No coriander", pick="Add to my order", view="View my order", title="My order", items="%s items", total="Total",
+ "en": dict(addT="Anything else?", addD="Something to drink?", sideL="Side", otherSide="+ Side", pickDone="Done", otherDrink="+ Drink", pickSide="Add a side", pickDrink="Add a drink", pickNone="None", drinkPick="Drink", noDrink="No drink", combo="Add this combo", extras="Extras", noCo="No coriander", pick="Add to my order", view="View my order", title="My order", items="%s items", total="Total",
    spice="Spice", staff="Show to staff ›", copy="Copy", copied="Copied", clear="Clear", back="Keep choosing",
    empty="Nothing chosen yet. Tap ＋ on any dish to add it.",
    notOrder="This is just a list — nothing has been ordered yet. When you're ready, show it to our staff.",
    priceNote="Prices are a guide; staff confirm the total.",
    staffNote="Lista hecha por el cliente, aún sin pedir"),
 }
+
+
+# --- 店铺信息 -------------------------------------------------------------
+TEL = "+34671343226"
+MAP = "https://maps.app.goo.gl/jDEgD1ig8q6Gt72TA"
+REV = "https://www.google.com/search?q=Sibisi+restaurant+ramen+Valencia#lrd=0xd604ff2c6100665:0x904337579649cf0,3,,,"
+
+# 结算前的加点推荐：出餐快、毛利高。凉拌黄瓜现做费时，不放进来。
+UPSELL = ["6-5|s", "2-11", "6-4", "6-1"]

@@ -14,6 +14,10 @@ const CT=__CT__;
 const SP=__SP__;
 const CORI=__CORI__;
 const DRKMAP=__DRKMAP__;
+const UPSELL=__UPSELL__;
+const TEL=__TEL__;
+const MAP=__MAP__;
+const REV=__REV__;
 const POT=c=>c.slice(0,2)==="1-";
 const LI={zh:0,es:1,en:2};
 const eur=(n,l)=>l==="en"?"€"+n.toFixed(2):n.toFixed(2).replace(".",",")+" €";
@@ -33,10 +37,28 @@ const ALG={
 const algIcon=k=>{const a=ALG[k];return `<span class="ai"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="${a.c}"/><g fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round">${a.p}</g></svg>${nm(ALGN[k])}</span>`};
 const algRow=(s,lab)=>{const k=s.split(" ").filter(Boolean);return k.length?`<div class="alg">${lab?`<span class="alab">${T[L].algL}</span>`:""}${k.map(algIcon).join("")}</div>`:""};
 __ILLO__
+/* ---------- 筛选：素食 / 不辣 / 避开某个过敏原 ---------- */
+const fls=d=>(d.fl||"").split(" ");
+const als=d=>(d.al||"").split(" ");
+const woLab=(k,l)=>{const n=ALGN[k][LI[l]];return T[l].fWo.replace("%s",l==="zh"?n:n.toLowerCase())};
+const FILD=[
+ {id:"v",  lab:l=>T[l].veg, ok:d=>fls(d).includes("v")||fls(d).includes("vg")},
+ {id:"nh", lab:l=>T[l].fNo, ok:d=>!fls(d).includes("h")},
+ {id:"H",  lab:l=>woLab("H",l),  ok:d=>!als(d).includes("H")},
+ {id:"Se", lab:l=>woLab("Sé",l), ok:d=>!als(d).includes("Sé")},
+ {id:"M",  lab:l=>woLab("M",l),  ok:d=>!als(d).includes("M")}];
+let FIL=[];
+const dishOk=d=>FIL.every(id=>FILD.find(f=>f.id===id).ok(d));
+function renderFil(){
+  const t=T[L],n=S.reduce((a,sec)=>a+sec.d.filter(dishOk).length,0);
+  $("filters").innerHTML=`<span class="qlab">${esc(t.fT)}</span>`
+    +FILD.map(f=>`<button class="chip" type="button" data-fil="${f.id}" aria-pressed="${FIL.includes(f.id)}">${esc(f.lab(L))}</button>`).join("")
+    +(FIL.length?`<span class="fcount">${esc(t.fCount.replace("%s",n))}</span><button class="chip clr" type="button" data-fil="*">${esc(t.fClear)}</button>`:"");
+}
 function findDish(c){let r=null;S.forEach(s=>s.d.forEach(x=>{if(x.c===c)r=x}));return r}
 function pairLine(d){const p=PR[d.c];if(!p)return "";const t=T[L];const sd=SIDE[p[0]];const d1=DRK[p[1][0]],d2=DRK[p[1][1]];
  const lo=Math.min(d1[1],d2[1]),hi=Math.max(d1[1],d2[1]);const pr=lo===hi?eur(lo,L):eur(lo,L)+"–"+eur(hi,L);
- return `<div class="pairl"><b>${t.pairWith}</b> ${esc(nm(sd[0]))} <span class="plus">+${eur(sd[1],L)}</span>${p[2]?"":` · ${esc(nm(d1[0]))} ${t.orw} ${esc(nm(d2[0]))} <span class="plus">+${pr}</span>`}</div>`}
+ return `<div class="pairl"><b>${t.pairWith}</b> ${esc(nm(sd[0]))} <span class="plus">+${eur(sd[1],L)}</span> · ${esc(nm(d1[0]))} ${t.orw} ${esc(nm(d2[0]))} <span class="plus">+${pr}</span></div>`}
 let PICK={};                       // 每道主食的套餐选择：{sd:小菜, dr:饮料}
 // 可选小菜：凉菜炒饭那一区（辣白菜分小/大）+ 水煮蛋
 function sideOpts(){
@@ -112,16 +134,24 @@ function render(){
   $("h-desc").textContent=t.desc; $("h-from").textContent=t.frm;
   $("steps").innerHTML=t.steps.map(s=>`<li>${esc(s)}</li>`).join("");
   $("first-t").textContent=t.firstT;
-  $("first").innerHTML=FIRST.map(f=>`<li><a class="c" href="#d-${f.c}">${f.c}</a><span>${esc(f[L])}</span>${stepper(f.c,`data-c="${f.c}"`)}</li>`).join("");
+  $("first").innerHTML=FIRST.map(f=>{const d=findDish(f.c),det=DET[f.c]?` data-det="${f.c}" tabindex="0" role="button"`:"";
+    return `<li${det}><div class="thumb">${d.img?`<img src="img/${d.img}.jpg" alt="" loading="lazy">`:illo(d.c,"")}<span class="badge">${d.c}</span></div>
+      <div class="ft"><h4>${esc(L==="zh"?d.zh:d[L])}</h4><em>${esc(f[L])}</em></div>
+      <div class="fr"><b>${eur(d.p,L)}</b>${stepper(d.c,`data-c="${d.c}"`)}</div></li>`}).join("");
   $("herobuy").innerHTML=`<span class="qlab">1-1 ${esc(L==="zh"?findDish("1-1").zh:findDish("1-1")[L])}</span>${stepper("1-1",'data-c="1-1"')}`;
   $("promise").innerHTML=`<b>${esc(t.promiseT)}</b><ul>${t.promise.map(([ic,x])=>`<li><span>${ic}</span>${esc(x)}</li>`).join("")}</ul>`;
   $("f-take").textContent=t.take; $("copy").textContent=t.copy;
+  $("phone").href="tel:"+TEL;
+  $("f-dirs").textContent=t.dirs; $("f-dirs").href=MAP;
+  $("f-rev").textContent=t.rev;   $("f-rev").href=REV;
   $("f-all").innerHTML=algRow("G H S Sé P M",true)+`<div style="margin-top:6px">${esc(t.all)}</div>`;
   document.querySelectorAll(".lang button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.l===L));
   const secName=s=>L==="zh"?s.zh:s[L];
-  $("rail").innerHTML=S.map(s=>`<a href="#${s.id}" data-s="${s.id}">${esc(secName(s))}</a>`).join("")+`<a href="#bebidas" data-s="bebidas">${t.drinks}</a>`;
-  let h="";
-  for(const s of S){
+  renderFil();
+  const SS=S.map(s=>Object.assign({},s,{d:s.d.filter(dishOk)})).filter(s=>s.d.length);
+  $("rail").innerHTML=SS.map(s=>`<a href="#${s.id}" data-s="${s.id}">${esc(secName(s))}</a>`).join("")+`<a href="#bebidas" data-s="bebidas">${t.drinks}</a>`;
+  let h=SS.length?"":`<p class="fempty">${esc(t.fEmpty)}</p>`;
+  for(const s of SS){
     h+=`<section id="${s.id}"><div class="sh"><h3>${esc(secName(s))}</h3>${L==="zh"?"":`<span class="zh">${s.zh}</span>`}</div><p class="note">${esc(s.note[L])}</p><div class="list">`;
     for(const d of s.d){
       const name=L==="zh"?d.zh:d[L];
@@ -173,22 +203,29 @@ function closeDet(){DETC=null;$("sheet").hidden=true;$("scrim").hidden=true;
   document.body.classList.remove("detailing");document.body.style.overflow=""}
 document.addEventListener("click",e=>{
   const q=e.target.closest("[data-q]");
-  if(q){e.preventDefault();cartBump(q.dataset.k,+q.dataset.q,q.dataset);
-    if(+q.dataset.q>0)flyToCart(q);
+  if(q){e.preventDefault();const f=+q.dataset.q>0?flyFrom(q):null;
+    cartBump(q.dataset.k,+q.dataset.q,q.dataset);flyToCart(f);
     return}
   const cb=e.target.closest("[data-combo]");
   if(cb){e.preventDefault();
-    const c=cb.dataset.combo,sel=PICK[c]||{sd:{},dr:{}};
+    const c=cb.dataset.combo,sel=PICK[c]||{sd:{},dr:{}},f=flyFrom(cb);
     cartBump(c,1,{c:c});
     for(const e of Object.values(sel.sd||{}))cartBump(e.o.k,e.q,{c:e.o.c,sz:e.o.sz});
     for(const e of Object.values(sel.dr||{}))cartBump(e.o.k,e.q,{dr:e.o.dr,dv:e.o.dv});
-    flyToCart(cb);
+    flyToCart(f);
+    return}
+  const fb=e.target.closest("[data-fil]");
+  if(fb){e.preventDefault();const id=fb.dataset.fil;
+    FIL=id==="*"?[]:FIL.includes(id)?FIL.filter(x=>x!==id):FIL.concat(id);
+    render();
+    if(FIL.length)$("filters").scrollIntoView({block:"start",behavior:"smooth"});
     return}
   const mo=e.target.closest("[data-more]");
   if(mo){e.preventDefault();const[kind,c]=mo.dataset.more.split("|");openPick(kind,c);return}
   const cq=e.target.closest("[data-cq]");
-  if(cq){e.preventDefault();const[kind,c,k,n]=cq.dataset.cq.split(";");bumpPick(kind,c,k,+n);
-    if(+n>0&&!$("pick").hidden)flyToCart(cq);return}
+  if(cq){e.preventDefault();const[kind,c,k,n]=cq.dataset.cq.split(";");
+    const f=+n>0&&!$("pick").hidden?flyFrom(cq):null;
+    bumpPick(kind,c,k,+n);flyToCart(f);return}
   const op=e.target.closest("[data-opt]");
   if(op){e.preventDefault();const[kind,c,i]=op.dataset.opt.split("|");setOpt(kind,c,+i);return}
   const r=e.target.closest("[data-det]");if(r)openDet(r.dataset.det);
@@ -284,14 +321,17 @@ function setOpt(kind,c,i){
   else if(kind==="nc")o.nc=!o.nc;
   else{const a=o.ex||(o.ex=[]),p=a.indexOf(i);p<0?a.push(i):a.splice(p,1);a.sort((x,y)=>x-y)}
   cartSave();syncCart()}
-function flyToCart(btn){
-  if(!btn||matchMedia("(prefers-reduced-motion:reduce)").matches)return;
+function flyFrom(btn){
+  if(!btn||matchMedia("(prefers-reduced-motion:reduce)").matches)return null;
   btn.classList.remove("tap");void btn.offsetWidth;btn.classList.add("tap");
-  const bar=$("cartbar"),b=btn.getBoundingClientRect();
-  const dish=btn.closest(".dish"),img=dish&&dish.querySelector(".thumb img");
+  const card=btn.closest(".dish,.first li"),img=card&&card.querySelector(".thumb img");
+  return {b:btn.getBoundingClientRect(),src:img?img.src:""}}
+function flyToCart(f){
+  if(!f)return;
+  const bar=$("cartbar"),b=f.b;
   const el=document.createElement("div");
   el.className="fly";
-  if(img)el.style.backgroundImage=`url("${img.src}")`;
+  if(f.src)el.style.backgroundImage=`url("${f.src}")`;
   el.style.left=(b.left+b.width/2-19)+"px";
   el.style.top=(b.top+b.height/2-19)+"px";
   document.body.appendChild(el);
@@ -319,6 +359,24 @@ function syncCart(){
   if(!$("order").hidden)renderOrder();
   if(!$("staff").hidden)renderStaff();
 }
+// 结算前的加点：小菜按 UPSELL（出餐快、毛利高），饮料按单子里那些菜各自的推荐
+function addonBlock(){
+  const ct=CT[L],ks=cKeys();
+  const sides=UPSELL.map(k=>sideOpts().find(o=>o.k===k)).filter(o=>o&&!CART[o.k]).slice(0,2);
+  let drinks=[];
+  if(!ks.some(k=>CART[k].dr)){
+    const seen={};
+    for(const k of ks){const p=PR[CART[k].c];if(!p)continue;
+      for(const dk of p[1])if(!seen[dk]){seen[dk]=1;drinks.push(dk)}}
+    if(!drinks.length)drinks=["am","cc"];
+    drinks=drinks.slice(0,3).map(dk=>({k:DRKMAP[dk]+"|"+dk,dr:DRKMAP[dk],dv:dk}));
+  }
+  if(!sides.length&&!drinks.length)return "";
+  const chip=(o,ds)=>`<button class="chip" type="button" data-q="1" data-k="${o.k}" ${ds}>${esc(pickName(o))} +${eur(pickPrice(o),L)}</button>`;
+  return `<div class="addon">
+    ${sides.length?`<b>${esc(ct.addT)}</b><div class="opt">${sides.map(o=>chip(o,`data-c="${o.c}" data-sz="${o.sz||""}"`)).join("")}</div>`:""}
+    ${drinks.length?`<b>${esc(ct.addD)}</b><div class="opt">${drinks.map(o=>chip(o,`data-dr="${o.dr}" data-dv="${o.dv}"`)).join("")}</div>`:""}</div>`;
+}
 function renderOrder(){
   const ct=CT[L],ks=cKeys();
   const rows=ks.map(k=>{const it=CART[k];
@@ -332,6 +390,7 @@ function renderOrder(){
     <ul class="olist">${rows}</ul>
     <div class="otot"><span>${esc(ct.total)}</span><b>${eur(cTotal(),L)}</b></div>
     <div class="ohint">${esc(ct.priceNote)}</div>
+    ${addonBlock()}
     <div class="zhbox"><dt>给店员看 · 中文</dt>${zh}
       <div class="zhrow zhsum"><span>共 ${cCount()} 份</span><span>${eur(cTotal(),"es")}</span></div></div>
     <div class="oact"><button class="obtn" type="button" id="ostaff">${esc(ct.staff)}</button>
