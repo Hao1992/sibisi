@@ -155,6 +155,13 @@ section{scroll-margin-top:64px;padding-top:22px}
 .foot .phone{font-weight:800;font-size:18px;user-select:all;font-variant-numeric:tabular-nums}
 .copy{border:1px solid var(--line);background:var(--chip);color:var(--ink);font:700 13px var(--f-body);border-radius:999px;padding:6px 12px;cursor:pointer}
 .legend{color:var(--muted);font-size:12.5px}
+.chopb{border:0;background:none;padding:0;color:var(--red);font:800 13.5px var(--f-body);cursor:pointer;text-align:left}
+.chop{margin-top:10px;display:grid;gap:10px}
+.cstep{display:grid;grid-template-columns:108px 1fr;gap:11px;align-items:center}
+.cstep svg{width:108px;height:61px;border-radius:10px;display:block}
+.cstep p{margin:0;font-size:13px;line-height:1.45;color:var(--muted)}
+.cstep p b{display:inline-grid;place-items:center;width:18px;height:18px;margin-right:6px;border-radius:50%;background:var(--red);color:#fff;font-size:11px;vertical-align:1px}
+.chop small{color:var(--muted);font-size:12.5px}
 .packs{margin-top:14px;display:grid;gap:10px}
 .packs>b{font-size:15px}
 .packs>small{color:var(--muted);font-size:12.5px}
@@ -193,6 +200,20 @@ section{scroll-margin-top:64px;padding-top:22px}
 .fbar .chip.clr{border-style:dashed;color:var(--red);border-color:var(--red)}
 .fbar .fcount{font-size:12.5px;font-weight:700;color:var(--muted)}
 .fempty{margin:22px 0;color:var(--muted);font-size:14px}
+.fbar .chip.luck{border-color:var(--red);color:var(--red);font-weight:800}
+.luck{margin-top:10px;border:1.5px dashed var(--red);border-radius:16px;padding:12px 14px;display:grid;gap:8px}
+.lq b{font-size:14.5px}
+.lq span{font-size:12px;font-weight:700;color:var(--muted)}
+.luck p{margin:0;font-size:13px;color:var(--muted);line-height:1.45}
+.lrow{display:grid;grid-template-columns:56px 1fr auto;gap:10px;align-items:center}
+.luck .thumb{width:56px;height:56px;border-radius:12px}
+.luck .thumb .badge{left:3px;bottom:3px;font-size:10px;padding:0 4px}
+.lt{min-width:0}
+.lt h4{margin:0;font-size:14.5px;font-weight:800;line-height:1.25}
+.llink{border:0;background:none;padding:0;margin-top:2px;color:var(--red);font:800 12.5px var(--f-body);cursor:pointer}
+.lr{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.lr b{font-size:14px;font-variant-numeric:tabular-nums}
+.luck .chip.more{justify-self:start}
 .spice,.opt{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:8px}
 .buy{background:var(--chip);border-radius:14px;padding:10px 12px;display:grid;gap:2px}
 .buy .opt{margin-top:6px}
@@ -232,6 +253,12 @@ body.ordering .cartbar{display:none}
 .on-edit[aria-expanded="true"]{border-color:var(--red);color:var(--red)}
 .on-edit .ar{color:var(--muted);font-weight:800}
 .on-opts{display:grid;gap:7px}
+.slip{display:grid;gap:8px;justify-items:start}
+.slip .obtn.sec{width:100%;text-align:center}
+.slipcard{width:100%;background:var(--chip);border:1px dashed var(--line);border-radius:14px;padding:16px 14px;display:grid;justify-items:center;gap:2px;text-align:center}
+.slipcard b{font-family:var(--f-zh);font-size:52px;line-height:1.1;color:var(--red)}
+.slipcard i{font-style:normal;font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.04em}
+.slipcard p{margin:8px 0 0;font-size:13.5px;line-height:1.55;color:var(--ink)}
 .chip.split{justify-self:start;border-style:dashed;border-color:var(--red);color:var(--red);font-size:12.5px;padding:7px 12px}
 .totop{position:fixed;right:14px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:6;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:800 20px var(--f-body);line-height:1;cursor:pointer;box-shadow:0 3px 14px rgba(0,0,0,.28);display:grid;place-items:center;padding:0}
 body.hascart .totop{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
@@ -318,6 +345,7 @@ body.detailing .totop,body.ordering .totop{display:none}
 
   <nav class="rail" id="rail"></nav>
   <div class="fbar" id="filters"></div>
+  <div class="luck" id="luck" hidden></div>
   <main id="menu"></main>
   <div class="scrim" id="scrim" hidden></div>
   <div class="sheet" id="sheet" role="dialog" aria-modal="true" hidden></div>
@@ -334,12 +362,14 @@ body.detailing .totop,body.ordering .totop{display:none}
     <div class="row"><div><div class="legend" id="f-take"></div><a class="phone" id="phone" href="tel:+34671343226">671 343 226</a></div><button class="copy" id="copy"></button></div>
     <div class="row"><div>C/ de Julio Antonio, 24 · 46007 València</div><a class="flink" id="f-dirs" target="_blank" rel="noopener"></a></div>
     <div class="row"><a class="flink" id="f-rev" target="_blank" rel="noopener"></a></div>
+    <div><button class="chopb" id="chopb" type="button" aria-expanded="false"></button>
+      <div class="chop" id="chop" hidden></div></div>
     <div class="legend" id="f-all"></div>
   </footer>
 </div>
 
 <script>
-const T={"zh": {"tagline": "家常中餐 · Cocina china", "eye": "招牌菜", "title": "黄焖鸡米饭（砂锅）", "desc": "山东经典家常菜。鸡肉以酱油和香菇汁慢火焖煮，砂锅上桌，配青菜，含米饭。咸鲜下饭，默认不辣。", "frm": "套餐含米饭，起价", "steps": ["看到想吃的，点 ＋ 加进单子", "黄焖锅可以选辣度，带香菜的面可以不要香菜", "选好点屏幕下方「查看我的单子」，把手机给店员看"], "firstT": "第一次来？推荐", "take": "外带请致电", "copy": "复制电话", "copied": "已复制", "all": "菌菇不属于欧盟规定的 14 类过敏原，我们额外标注。如有过敏，请告知店员。", "algL": "过敏原", "veg": "素食", "vegan": "纯素", "extras": "砂锅加配菜（另收费）", "drinks": "酒水", "beers": "啤酒", "wine": "葡萄酒", "soft": "饮料", "water": "水", "promiseT": "我们的坚持", "promise": [["面", "我们的手工面，每一根都用小麦粉在店里制作（不是米粉）"], ["酱", "酱汁和汤底由店里按自家配方现调"], ["鲜", "手工面和黄焖锅不用预制，每一碗现点现做"]], "more": "查看详细介绍 ›", "pairWith": "可另点（另收费）：", "orw": "或", "pairT": "推荐加点（另收费，不含在主食里）", "total": "加点后合计", "soupTotal": "面 + 小菜合计", "coldQ": "想喝点冰的？", "pairNote": "以上小菜和饮料不含在主食价格里，需要另外点、另外付费。想加的话，点单时告诉店员菜号就行。", "illo": "示意图 · 实拍照片待补", "close": "关闭", "dirs": "怎么走 ›", "rev": "在 Google 上给我们评价 ›", "call": "拨打", "packT": "几个人吃？", "packAdd": "加进单子", "packEach": "人均 %s", "packNote": "先加上，再在单子里增减就行。", "top": "最多人点", "fT": "挑菜", "fNo": "不辣", "fWo": "不含%s", "fCount": "%s 道菜", "fClear": "清除", "fEmpty": "没有同时满足这些条件的菜。少选一个条件试试，或者直接问店员。", "adj": "辣度：不辣、微辣、中辣、特辣（默认不辣）。加配菜另收费：土豆 +1,00 €，油菜 +1,20 €，白蘑菇 +1,60 €，金针菇 +1,60 €，米饭 +1,70 €。加辣用的辣椒油含芝麻。", "pot": "砂锅端上桌时还在咕嘟冒泡，这是黄焖锅最好吃的时刻。小心别碰锅边。先吃配菜，再把汤汁浇在米饭上拌着吃。"}, "es": {"tagline": "Cocina china casera · 中餐", "eye": "Nuestro plato estrella", "title": "Estofado de pollo Huangmen", "desc": "Un clásico casero de Shandong, en el norte de China. Pollo cocinado a fuego lento en salsa de soja y setas, servido humeante en olla de barro, con verduras y arroz incluido. Salado y sabroso, sin picante si no lo pides.", "frm": "Menú con arroz, desde", "steps": ["¿Te apetece algo? Pulsa ＋ para añadirlo a tu lista", "En las ollas eliges el picante; los fideos con cilantro puedes pedirlos sin", "Cuando acabes, abre «Ver mi pedido» abajo y enséñaselo al personal"], "firstT": "¿Primera vez? Te recomendamos", "take": "Para llevar, llámanos", "copy": "Copiar número", "copied": "Copiado", "all": "Las setas no están entre los 14 alérgenos obligatorios de la UE, pero las señalamos igualmente. Si tienes alguna alergia, avisa al personal.", "algL": "Alérgenos", "veg": "Vegetariano", "vegan": "Vegano", "extras": "Extras para tu olla (con suplemento)", "drinks": "Bebidas", "beers": "Cervezas", "wine": "Vino", "soft": "Refrescos", "water": "Agua", "promiseT": "Hecho aquí", "promise": [["面", "Nuestros fideos caseros, hechos a mano en el local con harina de trigo (no son de arroz)"], ["酱", "Salsas y caldos preparados aquí con nuestra receta"], ["鲜", "Fideos caseros y ollas sin precocinados: cada plato se hace al momento"]], "more": "Ver detalles ›", "pairWith": "Para añadir (se paga aparte):", "orw": "o", "pairT": "Sugerencia para añadir (se paga aparte, no incluido)", "total": "Total si lo añades", "soupTotal": "Total fideos + entrante", "coldQ": "¿Algo fresquito para beber?", "pairNote": "El entrante y la bebida no están incluidos en el precio del plato: se piden y se pagan aparte. Si los quieres, dile los números al personal.", "illo": "Ilustración · foto real próximamente", "close": "Cerrar", "dirs": "Cómo llegar ›", "rev": "Déjanos una reseña en Google ›", "call": "Llamar", "packT": "¿Cuántos sois?", "packAdd": "Añadir al pedido", "packEach": "%s por persona", "packNote": "Añádelo y luego ajusta lo que quieras en tu pedido.", "top": "Los más pedidos", "fT": "Filtrar", "fNo": "Sin picante", "fWo": "Sin %s", "fCount": "%s platos", "fClear": "Quitar", "fEmpty": "No hay platos que cumplan todo esto. Prueba con un filtro menos, o pregúntanos.", "adj": "Nivel de picante: sin picante, suave, medio o muy picante (por defecto, sin picante). Extras con suplemento: patata +1,00 €, pak choi +1,20 €, champiñón +1,60 €, setas enoki +1,60 €, arroz +1,70 €. El aceite de chile que usamos para el picante lleva sésamo.", "pot": "La olla llega a la mesa todavía hirviendo: ese es el mejor momento. Cuidado, el borde quema. Empieza por los ingredientes y después echa la salsa sobre el arroz."}, "en": {"tagline": "Home-style Chinese food · 中餐", "eye": "Our signature dish", "title": "Huangmen braised chicken pot", "desc": "A home-style classic from Shandong, northern China. Chicken slow-braised in soy and mushroom sauce, served bubbling in a clay pot with greens and rice included. Savoury, and not spicy unless you ask.", "frm": "Set with rice, from", "steps": ["See something you like? Tap ＋ to add it to your list", "Pots let you pick the spice level; noodles with coriander can come without", "When you are done, open “View my order” at the bottom and show it to our staff"], "firstT": "First time? Try these", "take": "Takeaway: call us", "copy": "Copy number", "copied": "Copied", "all": "Mushrooms aren't one of the EU's 14 mandatory allergens, but we mark them anyway. If you have an allergy, please tell our staff.", "algL": "Allergens", "veg": "Vegetarian", "vegan": "Vegan", "extras": "Pot extras (extra charge)", "drinks": "Drinks", "beers": "Beer", "wine": "Wine", "soft": "Soft drinks", "water": "Water", "promiseT": "Made here", "promise": [["面", "Our handmade noodles are made in-house from wheat flour (not rice noodles)"], ["酱", "Sauces and broths mixed here to our own recipe"], ["鲜", "Our handmade noodles and pots are never pre-cooked: every bowl is made to order"]], "more": "See details ›", "pairWith": "Optional add-ons (extra charge):", "orw": "or", "pairT": "Suggested add-ons (extra charge, not included)", "total": "Total with add-ons", "soupTotal": "Noodles + side total", "coldQ": "Fancy a cold drink?", "pairNote": "Sides and drinks are not included in the dish price: they are ordered and paid separately. To add them, just tell our staff the numbers.", "illo": "Illustration · real photo coming soon", "close": "Close", "dirs": "Get directions ›", "rev": "Leave us a Google review ›", "call": "Call", "packT": "How many of you?", "packAdd": "Add to my order", "packEach": "%s per person", "packNote": "Add it, then adjust anything you like in your order.", "top": "Most ordered", "fT": "Filter", "fNo": "Not spicy", "fWo": "No %s", "fCount": "%s dishes", "fClear": "Clear", "fEmpty": "No dishes match all of these. Try one filter fewer, or just ask us.", "adj": "Spice: none, mild, medium or extra hot (no spice by default). Extras at extra cost: potato +€1.00, pak choi +€1.20, button mushrooms +€1.60, enoki +€1.60, rice +€1.70. The chilli oil we use for spice contains sesame.", "pot": "The pot arrives still bubbling, which is the best moment to eat it. Careful, the rim is hot. Eat the toppings first, then spoon the sauce over your rice."}};
+const T={"zh": {"tagline": "家常中餐 · Cocina china", "eye": "招牌菜", "title": "黄焖鸡米饭（砂锅）", "desc": "山东经典家常菜。鸡肉以酱油和香菇汁慢火焖煮，砂锅上桌，配青菜，含米饭。咸鲜下饭，默认不辣。", "frm": "套餐含米饭，起价", "steps": ["看到想吃的，点 ＋ 加进单子", "黄焖锅可以选辣度，带香菜的面可以不要香菜", "选好点屏幕下方「查看我的单子」，把手机给店员看"], "firstT": "第一次来？推荐", "take": "外带请致电", "copy": "复制电话", "copied": "已复制", "all": "菌菇不属于欧盟规定的 14 类过敏原，我们额外标注。如有过敏，请告知店员。", "algL": "过敏原", "veg": "素食", "vegan": "纯素", "extras": "砂锅加配菜（另收费）", "drinks": "酒水", "beers": "啤酒", "wine": "葡萄酒", "soft": "饮料", "water": "水", "promiseT": "我们的坚持", "promise": [["面", "我们的手工面，每一根都用小麦粉在店里制作（不是米粉）"], ["酱", "酱汁和汤底由店里按自家配方现调"], ["鲜", "手工面和黄焖锅不用预制，每一碗现点现做"]], "more": "查看详细介绍 ›", "pairWith": "可另点（另收费）：", "orw": "或", "pairT": "推荐加点（另收费，不含在主食里）", "total": "加点后合计", "soupTotal": "面 + 小菜合计", "coldQ": "想喝点冰的？", "pairNote": "以上小菜和饮料不含在主食价格里，需要另外点、另外付费。想加的话，点单时告诉店员菜号就行。", "illo": "示意图 · 实拍照片待补", "close": "关闭", "dirs": "怎么走 ›", "rev": "在 Google 上给我们评价 ›", "call": "拨打", "luck": "帮我选一个", "luckAgain": "再选一个", "today": "今日", "seeIt": "看看这道 ›", "slipT": "吃完了？抽一张", "slipAgain": "再抽一张", "chopT": "不会用筷子？", "chopEnd": "拿不好也没关系，跟我们说一声就给你叉子。", "hiAgain": "又见面了 👋", "packT": "几个人吃？", "packAdd": "加进单子", "packEach": "人均 %s", "packNote": "先加上，再在单子里增减就行。", "top": "最多人点", "fT": "挑菜", "fNo": "不辣", "fWo": "不含%s", "fCount": "%s 道菜", "fClear": "清除", "fEmpty": "没有同时满足这些条件的菜。少选一个条件试试，或者直接问店员。", "adj": "辣度：不辣、微辣、中辣、特辣（默认不辣）。加配菜另收费：土豆 +1,00 €，油菜 +1,20 €，白蘑菇 +1,60 €，金针菇 +1,60 €，米饭 +1,70 €。加辣用的辣椒油含芝麻。", "pot": "砂锅端上桌时还在咕嘟冒泡，这是黄焖锅最好吃的时刻。小心别碰锅边。先吃配菜，再把汤汁浇在米饭上拌着吃。"}, "es": {"tagline": "Cocina china casera · 中餐", "eye": "Nuestro plato estrella", "title": "Estofado de pollo Huangmen", "desc": "Un clásico casero de Shandong, en el norte de China. Pollo cocinado a fuego lento en salsa de soja y setas, servido humeante en olla de barro, con verduras y arroz incluido. Salado y sabroso, sin picante si no lo pides.", "frm": "Menú con arroz, desde", "steps": ["¿Te apetece algo? Pulsa ＋ para añadirlo a tu lista", "En las ollas eliges el picante; los fideos con cilantro puedes pedirlos sin", "Cuando acabes, abre «Ver mi pedido» abajo y enséñaselo al personal"], "firstT": "¿Primera vez? Te recomendamos", "take": "Para llevar, llámanos", "copy": "Copiar número", "copied": "Copiado", "all": "Las setas no están entre los 14 alérgenos obligatorios de la UE, pero las señalamos igualmente. Si tienes alguna alergia, avisa al personal.", "algL": "Alérgenos", "veg": "Vegetariano", "vegan": "Vegano", "extras": "Extras para tu olla (con suplemento)", "drinks": "Bebidas", "beers": "Cervezas", "wine": "Vino", "soft": "Refrescos", "water": "Agua", "promiseT": "Hecho aquí", "promise": [["面", "Nuestros fideos caseros, hechos a mano en el local con harina de trigo (no son de arroz)"], ["酱", "Salsas y caldos preparados aquí con nuestra receta"], ["鲜", "Fideos caseros y ollas sin precocinados: cada plato se hace al momento"]], "more": "Ver detalles ›", "pairWith": "Para añadir (se paga aparte):", "orw": "o", "pairT": "Sugerencia para añadir (se paga aparte, no incluido)", "total": "Total si lo añades", "soupTotal": "Total fideos + entrante", "coldQ": "¿Algo fresquito para beber?", "pairNote": "El entrante y la bebida no están incluidos en el precio del plato: se piden y se pagan aparte. Si los quieres, dile los números al personal.", "illo": "Ilustración · foto real próximamente", "close": "Cerrar", "dirs": "Cómo llegar ›", "rev": "Déjanos una reseña en Google ›", "call": "Llamar", "luck": "Elige por mí", "luckAgain": "Otra sugerencia", "today": "Hoy", "seeIt": "Ver el plato ›", "slipT": "¿Ya habéis acabado? Saca un papelito", "slipAgain": "Sacar otro", "chopT": "¿No sabes usar los palillos?", "chopEnd": "Si no te salen, dínoslo y te traemos un tenedor.", "hiAgain": "¡Otra vez por aquí! 👋", "packT": "¿Cuántos sois?", "packAdd": "Añadir al pedido", "packEach": "%s por persona", "packNote": "Añádelo y luego ajusta lo que quieras en tu pedido.", "top": "Los más pedidos", "fT": "Filtrar", "fNo": "Sin picante", "fWo": "Sin %s", "fCount": "%s platos", "fClear": "Quitar", "fEmpty": "No hay platos que cumplan todo esto. Prueba con un filtro menos, o pregúntanos.", "adj": "Nivel de picante: sin picante, suave, medio o muy picante (por defecto, sin picante). Extras con suplemento: patata +1,00 €, pak choi +1,20 €, champiñón +1,60 €, setas enoki +1,60 €, arroz +1,70 €. El aceite de chile que usamos para el picante lleva sésamo.", "pot": "La olla llega a la mesa todavía hirviendo: ese es el mejor momento. Cuidado, el borde quema. Empieza por los ingredientes y después echa la salsa sobre el arroz."}, "en": {"tagline": "Home-style Chinese food · 中餐", "eye": "Our signature dish", "title": "Huangmen braised chicken pot", "desc": "A home-style classic from Shandong, northern China. Chicken slow-braised in soy and mushroom sauce, served bubbling in a clay pot with greens and rice included. Savoury, and not spicy unless you ask.", "frm": "Set with rice, from", "steps": ["See something you like? Tap ＋ to add it to your list", "Pots let you pick the spice level; noodles with coriander can come without", "When you are done, open “View my order” at the bottom and show it to our staff"], "firstT": "First time? Try these", "take": "Takeaway: call us", "copy": "Copy number", "copied": "Copied", "all": "Mushrooms aren't one of the EU's 14 mandatory allergens, but we mark them anyway. If you have an allergy, please tell our staff.", "algL": "Allergens", "veg": "Vegetarian", "vegan": "Vegan", "extras": "Pot extras (extra charge)", "drinks": "Drinks", "beers": "Beer", "wine": "Wine", "soft": "Soft drinks", "water": "Water", "promiseT": "Made here", "promise": [["面", "Our handmade noodles are made in-house from wheat flour (not rice noodles)"], ["酱", "Sauces and broths mixed here to our own recipe"], ["鲜", "Our handmade noodles and pots are never pre-cooked: every bowl is made to order"]], "more": "See details ›", "pairWith": "Optional add-ons (extra charge):", "orw": "or", "pairT": "Suggested add-ons (extra charge, not included)", "total": "Total with add-ons", "soupTotal": "Noodles + side total", "coldQ": "Fancy a cold drink?", "pairNote": "Sides and drinks are not included in the dish price: they are ordered and paid separately. To add them, just tell our staff the numbers.", "illo": "Illustration · real photo coming soon", "close": "Close", "dirs": "Get directions ›", "rev": "Leave us a Google review ›", "call": "Call", "luck": "Pick one for me", "luckAgain": "Try another", "today": "Today", "seeIt": "See the dish ›", "slipT": "Finished? Draw a slip", "slipAgain": "Draw another", "chopT": "New to chopsticks?", "chopEnd": "If they are not working, just ask and we will bring you a fork.", "hiAgain": "Good to see you again 👋", "packT": "How many of you?", "packAdd": "Add to my order", "packEach": "%s per person", "packNote": "Add it, then adjust anything you like in your order.", "top": "Most ordered", "fT": "Filter", "fNo": "Not spicy", "fWo": "No %s", "fCount": "%s dishes", "fClear": "Clear", "fEmpty": "No dishes match all of these. Try one filter fewer, or just ask us.", "adj": "Spice: none, mild, medium or extra hot (no spice by default). Extras at extra cost: potato +€1.00, pak choi +€1.20, button mushrooms +€1.60, enoki +€1.60, rice +€1.70. The chilli oil we use for spice contains sesame.", "pot": "The pot arrives still bubbling, which is the best moment to eat it. Careful, the rim is hot. Eat the toppings first, then spoon the sauce over your rice."}};
 const LBL={"zh": {"what": "这是什么", "story": "小故事", "ing": "主要食材", "taste": "口味与口感", "adj": "可以调整", "how": "怎么吃", "note": "需要知道", "who": "适合谁", "alg": "过敏原"}, "es": {"what": "¿Qué es?", "story": "Un poco de historia", "ing": "Ingredientes principales", "taste": "Sabor y textura", "adj": "Puedes ajustar", "how": "Cómo se come", "note": "A tener en cuenta", "who": "Ideal para", "alg": "Alérgenos"}, "en": {"what": "What it is", "story": "The story", "ing": "Main ingredients", "taste": "Taste & texture", "adj": "You can adjust", "how": "How to eat it", "note": "Good to know", "who": "Best for", "alg": "Allergens"}};
 const ALGN={"G": ["麸质", "Gluten", "Gluten"], "H": ["鸡蛋", "Huevo", "Egg"], "S": ["大豆", "Soja", "Soy"], "Sé": ["芝麻", "Sésamo", "Sesame"], "P": ["鱼类", "Pescado", "Fish"], "M": ["菌菇", "Setas", "Mushrooms"]};
 const TASTE={"sabroso": ["咸鲜", "Salado y sabroso", "Savoury"], "suave": ["清淡", "Suave", "Mild"], "intenso": ["浓郁红烧", "Guisado intenso", "Rich & braised"], "acido": ["酸爽", "Ácido", "Tangy"], "agridulce": ["酸甜", "Agridulce", "Sweet & sour"], "picante": ["香辣", "Picante", "Spicy"], "mala": ["麻辣", "Picante mala", "Numbing-spicy"], "especias": ["香料味", "Especiado", "Aromatic spices"], "comino": ["孜然", "Comino", "Cumin"], "ajo": ["蒜香", "Ajo", "Garlicky"], "fresco": ["清爽", "Frío y fresco", "Cold & fresh"], "soja": ["酱香", "Salsa de soja", "Soy sauce"]};
@@ -363,6 +393,10 @@ const TOP=["1-1", "2-3", "5-1"];
 const FRONT=["6-4", "6-5"];
 const GRP={"k": "厨房", "f": "前台"};
 const COMBO=[{"id": "p2", "n": 2, "zh": "两人 · 经典", "es": "Para dos · clásico", "en": "For two · classic", "zh2": "一个锅配一碗面：锅里含米饭，面带汤，两个人刚好。默认不辣。", "es2": "Una olla y un cuenco de fideos: la olla lleva arroz y los fideos caldo. Sin picante.", "en2": "One pot and one noodle bowl: the pot comes with rice, the noodles with broth. Not spicy.", "items": [["1-1", 1], ["2-3", 1], ["6-5|s", 1], ["dr-beers-3|ts", 1], ["dr-soft-0|ccz", 1]]}, {"id": "p2h", "n": 2, "zh": "两人 · 想吃辣", "es": "Para dos · con picante", "en": "For two · with heat", "zh2": "一辣一不辣，配清爽的凉拌海藻和两瓶冰的。", "es2": "Uno picante y otro sin picante, con alga fresca y dos bebidas frías.", "en2": "One spicy, one not, with fresh seaweed salad and two cold drinks.", "items": [["1-1", 1], ["2-4", 1], ["6-4", 1], ["dr-beers-1|rd", 1], ["dr-soft-6|wl", 1]]}, {"id": "p4", "n": 4, "zh": "一桌 · 三到四人", "es": "Para la mesa · 3 o 4", "en": "For the table · 3–4", "zh2": "两个锅两碗面分着吃，再来两份出餐快的小菜。", "es2": "Dos ollas y dos platos de fideos para compartir, con dos entrantes fríos.", "en2": "Two pots and two noodle dishes to share, with two cold starters.", "items": [["1-1", 1], ["1-3", 1], ["2-3", 1], ["5-1", 1], ["6-1", 1], ["6-4", 1], ["dr-beers-0|am", 2], ["dr-soft-0|cc", 2]]}];
+const JQ=[[1, 6, "小寒", "Xiǎohán", "Frío menor", "Minor cold", "hot"], [1, 20, "大寒", "Dàhán", "Gran frío", "Major cold", "hot"], [2, 4, "立春", "Lìchūn", "Comienza la primavera", "Start of spring", "light"], [2, 19, "雨水", "Yǔshuǐ", "Agua de lluvia", "Rain water", "light"], [3, 5, "惊蛰", "Jīngzhé", "Despertar de los insectos", "Insects awaken", "light"], [3, 20, "春分", "Chūnfēn", "Equinoccio de primavera", "Spring equinox", "light"], [4, 5, "清明", "Qīngmíng", "Claro y luminoso", "Clear and bright", "spicy"], [4, 20, "谷雨", "Gǔyǔ", "Lluvia de grano", "Grain rain", "spicy"], [5, 5, "立夏", "Lìxià", "Comienza el verano", "Start of summer", "light"], [5, 21, "小满", "Xiǎomǎn", "Grano casi lleno", "Grain buds", "cold"], [6, 6, "芒种", "Mángzhòng", "Grano en espiga", "Grain in ear", "cold"], [6, 21, "夏至", "Xiàzhì", "Solsticio de verano", "Summer solstice", "cold"], [7, 7, "小暑", "Xiǎoshǔ", "Calor menor", "Minor heat", "cold"], [7, 23, "大暑", "Dàshǔ", "Gran calor", "Major heat", "cold"], [8, 7, "立秋", "Lìqiū", "Comienza el otoño", "Start of autumn", "cold"], [8, 23, "处暑", "Chǔshǔ", "Fin del calor", "End of heat", "warm"], [9, 8, "白露", "Báilù", "Rocío blanco", "White dew", "warm"], [9, 23, "秋分", "Qiūfēn", "Equinoccio de otoño", "Autumn equinox", "warm"], [10, 8, "寒露", "Hánlù", "Rocío frío", "Cold dew", "warm"], [10, 23, "霜降", "Shuāngjiàng", "Cae la escarcha", "Frost descends", "warm"], [11, 7, "立冬", "Lìdōng", "Comienza el invierno", "Start of winter", "hot"], [11, 22, "小雪", "Xiǎoxuě", "Nieve menor", "Minor snow", "hot"], [12, 7, "大雪", "Dàxuě", "Gran nieve", "Major snow", "hot"], [12, 22, "冬至", "Dōngzhì", "Solsticio de invierno", "Winter solstice", "hot"]];
+const JQW={"hot": ["天冷下来了，中国北方这时候讲究吃口热的。", "Hace frío: en el norte de China toca algo caliente.", "Cold weather — in northern China this is the time for something hot."], "warm": ["秋天干燥，适合炖得久一点、味道厚一点的。", "Otoño seco: apetece algo guisado y con más sabor.", "Dry autumn days call for something braised and full-flavoured."], "light": ["春天宜清淡，先来碗温和的。", "En primavera, algo suave para empezar.", "Spring asks for something gentle."], "cold": ["天热，吃点清爽的、不带汤的。", "Con este calor, algo fresco y sin caldo.", "Hot days: something fresh, without broth."], "spicy": ["湿气重的时候，中国人会吃点辣，发发汗。", "Con la humedad, en China se come picante para sudar un poco.", "In damp weather, Chinese cooking turns to chilli to work up a sweat."]};
+const HANZI=[{"c": "焖", "py": "mèn", "zh": "火 + 闷：盖上锅盖，小火慢慢煨。我们招牌的「黄焖鸡」，名字就是这么来的。", "es": "«Fuego» + «encerrado»: tapar la olla y cocer despacio a fuego lento. De ahí viene el nombre de nuestro plato estrella, huángmèn jī.", "en": "“Fire” + “shut in”: cover the pot and let it cook slowly. That is where the name of our signature dish, huángmèn jī, comes from."}, {"c": "面", "py": "miàn", "zh": "繁体写作「麵」，左边是「麥」—— 麦子。面是麦子做的，不是米做的。我们的面在店里现做。", "es": "En su forma tradicional, 麵, lleva a la izquierda 麥: trigo. Los fideos son de trigo, no de arroz. Los nuestros se hacen aquí.", "en": "Its traditional form, 麵, has 麥 on the left: wheat. Noodles are made of wheat, not rice. Ours are made here in the shop."}, {"c": "鲜", "py": "xiān", "zh": "繁体「鮮」= 魚 + 羊。鱼和羊，古人觉得这两样放一起最好吃。菜单上写的「咸鲜」，说的就是这个味道。", "es": "En su forma tradicional, 鮮 = pez + cordero: para los antiguos chinos, los dos sabores más ricos juntos. Es el sabor que en la carta llamamos «salado y sabroso».", "en": "Its traditional form, 鮮, is fish + lamb: to the ancient Chinese, the two best flavours together. It is the taste we call “savoury” on the menu."}, {"c": "汤", "py": "tāng", "zh": "繁体「湯」= 氵+ 昜（太阳升起，热）。「汤」最早的意思其实是热水，后来才变成现在的汤。", "es": "En su forma tradicional, 湯 = agua + «sol naciente», es decir, calor. Al principio significaba simplemente agua caliente; lo de «sopa» vino después.", "en": "Its traditional form, 湯, is water + “rising sun”, that is, heat. At first it just meant hot water; “soup” came later."}, {"c": "拌", "py": "bàn", "zh": "提手旁 + 半：用手把东西拌到一起。拌面上桌先别急着吃，拌匀了才香。", "es": "«Mano» + «mitad»: mezclar dos cosas con la mano. Cuando lleguen tus fideos bàn, no empieces aún: remuévelos bien primero.", "en": "“Hand” + “half”: to mix things together by hand. When your bàn noodles arrive, don't start yet — stir them through first."}, {"c": "炒", "py": "chǎo", "zh": "火字旁，右边是「少」。油要少，火要大，手要快 —— 炒面就是这么来的。", "es": "Lleva el radical de «fuego» y a la derecha «poco». Poco aceite, mucho fuego y mano rápida: así se hacen los fideos salteados.", "en": "It carries the “fire” radical, with “few” on the right. Little oil, high heat, quick hands — that is how fried noodles are made."}, {"c": "香", "py": "xiāng", "zh": "上面是「禾」—— 谷子；下面本来是「甘」—— 甜。谷物煮熟时的那股味道，古人就叫它「香」。", "es": "Arriba, 禾: el cereal. Abajo, lo que era 甘: dulce. El olor del grano recién cocido: eso es 香.", "en": "On top, 禾: grain. Below, what used to be 甘: sweet. The smell of grain as it finishes cooking — that is 香."}, {"c": "食", "py": "shí", "zh": "我们店名的第一个字。上面像一个盖子，下面是一碗盛好的饭 —— 盖着的一碗饭，就是「食」。", "es": "La primera sílaba del nombre de nuestra casa. Arriba, una tapa; debajo, un cuenco servido: un cuenco tapado es «comida».", "en": "The first character in our name. A lid on top, a filled bowl underneath: a covered bowl of food is 食."}];
+const CHOP=[["下面这根不动：夹在虎口里，尾端搁在无名指上。", "El de abajo no se mueve: apóyalo en el hueco entre pulgar e índice y sobre el dedo anular.", "The bottom stick never moves: rest it in the web of your thumb and on your ring finger."], ["上面这根像拿笔：拇指、食指、中指捏住。", "El de arriba se coge como un lápiz: pulgar, índice y corazón.", "Hold the top one like a pencil: thumb, index and middle finger."], ["只动上面那根，下面那根一直不动，两头对齐就夹住了。", "Mueve solo el de arriba; el de abajo se queda quieto. Cuando las puntas se juntan, ya está.", "Move only the top stick; the bottom one stays still. When the tips meet, you have it."]];
 const POT=c=>c.slice(0,2)==="1-";
 const LI={zh:0,es:1,en:2};
 const eur=(n,l)=>l==="en"?"€"+n.toFixed(2):n.toFixed(2).replace(".",",")+" €";
@@ -418,9 +452,49 @@ const FILD=[
  {id:"M",  lab:l=>woLab("M",l),  ok:d=>!als(d).includes("M")}];
 let FIL=[];
 const dishOk=d=>FIL.every(id=>FILD.find(f=>f.id===id).ok(d));
+// 今日是哪个节气。节气按太阳位置算，全球同一天；元旦到小寒之间算上一年的冬至。
+function jieqi(){
+  const d=new Date(),m=d.getMonth()+1,day=d.getDate();
+  let cur=JQ[JQ.length-1];
+  for(const x of JQ)if(x[0]<m||(x[0]===m&&x[1]<=day))cur=x;
+  return cur}
+// 节气决定挑什么菜：热的 / 炖的 / 清淡的 / 凉爽的 / 辣的
+const JQPICK={
+  hot:  d=>["hm","sopa"].includes(d._s),
+  warm: d=>d.ta.includes("intenso")||d.ta.includes("sabroso"),
+  light:d=>d.ta.includes("suave")||d.ta.includes("agridulce"),
+  cold: d=>["mix","frios"].includes(d._s)||d.ta.includes("fresco")||d.ta.includes("acido"),
+  spicy:d=>fls(d).includes("h")};
+let LUCK=null;
+function pickLucky(){
+  const q=jieqi(),want=JQPICK[q[6]];
+  const all=[];
+  for(const sec of S)for(const d of sec.d){
+    if(d.c==="2-11"||!dishOk(d))continue;
+    all.push(Object.assign({_s:sec.id},d))}
+  let pool=all.filter(want),fb=false;
+  if(!pool.length){pool=all;fb=true}            // 筛选之后没有应季的，就不提节气那句话
+  if(LUCK){const f=pool.filter(x=>x.c!==LUCK.d.c);if(f.length)pool=f}
+  if(!pool.length)return null;
+  return {q:q,fb:fb,d:pool[Math.floor(Math.random()*pool.length)]}}
+function renderLuck(){
+  const box=$("luck");
+  if(!LUCK){box.innerHTML="";box.hidden=true;return}
+  const t=T[L],d=findDish(LUCK.d.c),q=LUCK.q;
+  box.hidden=false;
+  box.innerHTML=`<div class="lq"><b>${esc(t.today)} · ${esc(q[2])}</b> <span>${esc(q[3])}${L==="zh"?"":" · "+esc(L==="es"?q[4]:q[5])}</span></div>
+    ${LUCK.fb?"":`<p>${esc(JQW[q[6]][LI[L]])}</p>`}
+    <div class="lrow">
+      <div class="thumb">${d.img?`<img src="img/${d.img}.jpg" alt="" loading="lazy">`:illo(d.c,"")}<span class="badge">${d.c}</span></div>
+      <div class="lt"><h4>${esc(L==="zh"?d.zh:d[L])}</h4>${DET[d.c]?`<button class="llink" type="button" data-det="${d.c}">${esc(t.seeIt)}</button>`:""}</div>
+      <div class="lr"><b>${eur(d.p,L)}</b>${stepper(d.c,`data-c="${d.c}"`)}</div></div>
+    <button class="chip more" type="button" id="lagain">${esc(t.luckAgain)}</button>`;
+  $("lagain").onclick=()=>{LUCK=pickLucky();renderLuck();
+    $("luck").scrollIntoView({block:"nearest",behavior:"smooth"})};
+}
 function renderFil(){
   const t=T[L],n=S.reduce((a,sec)=>a+sec.d.filter(dishOk).length,0);
-  $("filters").innerHTML=`<span class="qlab">${esc(t.fT)}</span>`
+  $("filters").innerHTML=`<button class="chip luck" type="button" id="lbtn">${esc(t.luck)}</button><span class="qlab">${esc(t.fT)}</span>`
     +FILD.map(f=>`<button class="chip" type="button" data-fil="${f.id}" aria-pressed="${FIL.includes(f.id)}">${esc(f.lab(L))}</button>`).join("")
     +(FIL.length?`<span class="fcount">${esc(t.fCount.replace("%s",n))}</span><button class="chip clr" type="button" data-fil="*">${esc(t.fClear)}</button>`:"");
 }
@@ -504,7 +578,7 @@ function openPick(kind,c){
 function closePick(){$("pick").hidden=true;document.body.style.overflow=$("sheet").hidden&&$("order").hidden?"":"hidden"}
 function render(){
   const t=T[L]; document.documentElement.lang=L==="zh"?"zh-CN":L;
-  $("tagline").textContent=t.tagline; $("h-eye").textContent=t.eye; $("h-title").textContent=t.title;
+  $("tagline").textContent=BACK?t.hiAgain:t.tagline; $("h-eye").textContent=t.eye; $("h-title").textContent=t.title;
   $("h-desc").textContent=t.desc; $("h-from").textContent=t.frm;
   $("steps").innerHTML=t.steps.map(s=>`<li>${esc(s)}</li>`).join("");
   $("first-t").textContent=t.firstT;
@@ -518,12 +592,16 @@ function render(){
   $("f-take").textContent=t.take; $("copy").textContent=t.copy;
   $("phone").href="tel:"+TEL;
   $("totop").setAttribute("aria-label",CT[L].toTop);
+  renderChop();
   $("f-dirs").textContent=t.dirs; $("f-dirs").href=MAP;
   $("f-rev").textContent=t.rev;   $("f-rev").href=REV;
   $("f-all").innerHTML=algRow("G H S Sé P M",true)+`<div style="margin-top:6px">${esc(t.all)}</div>`;
   document.querySelectorAll(".lang button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.l===L));
   const secName=s=>L==="zh"?s.zh:s[L];
   renderFil();
+  $("lbtn").onclick=()=>{LUCK=pickLucky();renderLuck();
+    $("luck").scrollIntoView({block:"nearest",behavior:"smooth"})};
+  renderLuck();
   const SS=S.map(s=>Object.assign({},s,{d:s.d.filter(dishOk)})).filter(s=>s.d.length);
   $("rail").innerHTML=SS.map(s=>`<a href="#${s.id}" data-s="${s.id}">${esc(secName(s))}</a>`).join("")+`<a href="#bebidas" data-s="bebidas">${t.drinks}</a>`;
   let h=SS.length?"":`<p class="fempty">${esc(t.fEmpty)}</p>`;
@@ -577,6 +655,25 @@ function renderPacks(){
         <button class="obtn" type="button" data-pack="${p.id}">${esc(t.packAdd)}</button></div></div>`}).join("")
     +`<small>${esc(t.packNote)}</small>`;
 }
+// 筷子示意图：两根筷子 + 标号的手指位置，和菜品插画同一套配色
+function chopSvg(n){
+  const bg='<rect width="160" height="90" fill="#efe4c8"/>';
+  // 手握左边，筷尖在右边；越往右越细
+  const stk=(y1,y2,w,col)=>`<polygon points="12,${y1-w} 150,${y2-1.6} 150,${y2+1.6} 12,${y1+w}" fill="${col}"/>`;
+  const dot=(x,y,i)=>`<circle cx="${x}" cy="${y}" r="11" fill="#d4482f"/><text x="${x}" y="${y+5}" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">${i}</text>`;
+  const W="#b07c46",G="#dcc9ad";
+  if(n===1)return `<svg viewBox="0 0 160 90" role="img">${bg}${stk(72,60,5,W)}${dot(42,69,1)}${dot(78,66,2)}</svg>`;
+  if(n===2)return `<svg viewBox="0 0 160 90" role="img">${bg}${stk(72,60,5,G)}${stk(34,52,4.5,W)}${dot(36,39,1)}${dot(66,42,2)}${dot(96,46,3)}</svg>`;
+  return `<svg viewBox="0 0 160 90" role="img">${bg}${stk(72,60,5,W)}${stk(26,44,4.5,G)}${stk(44,56,4.5,W)}
+    <path d="M58 26 q-14 14 -2 28" stroke="#d4482f" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    <path d="M50 52 l10 2 -3 -10z" fill="#d4482f"/>
+    <circle cx="148" cy="58" r="8" fill="none" stroke="#3f8f3a" stroke-width="3"/></svg>`}
+function renderChop(){
+  const t=T[L],open=!$("chop").hidden;
+  $("chopb").textContent=t.chopT;
+  $("chopb").setAttribute("aria-expanded",open);
+  $("chop").innerHTML=CHOP.map((x,i)=>`<div class="cstep">${chopSvg(i+1)}<p><b>${i+1}</b>${esc(x[LI[L]])}</p></div>`).join("")
+    +`<small>${esc(t.chopEnd)}</small>`}
 function openDet(c){
   const d=findDish(c);if(!d||!DET[c])return;const t=T[L],lb=LBL[L],x=DET[c][L];
   const rows=["what","story","ing","taste","adj","how","note","who"].filter(k=>x[k]).map(k=>{
@@ -833,12 +930,16 @@ function renderOrder(){
     ${addonBlock()}
     <div class="zhbox"><dt>给店员看 · 中文</dt>${zh}
       <div class="zhrow zhsum"><span>共 ${cCount()} 份</span><span>${eur(cTotal(),"es")}</span></div></div>
+    ${slipBlock()}
     <div class="oact"><button class="obtn" type="button" id="ostaff">${esc(ct.staff)}</button>
       <button class="obtn sec" type="button" id="ocopy">${esc(ct.copy)}</button>
       <button class="obtn sec" type="button" id="oclear">${esc(ct.clear)}</button></div>`
     :`<p class="ohint">${esc(ct.empty)}</p>`}
   </div>`;
   $("oclose").onclick=closeOrder;
+  const sd=$("sdraw"),sa=$("sagain");
+  if(sd)sd.onclick=()=>{drawSlip();renderOrder();$("sagain").scrollIntoView({block:"nearest"})};
+  if(sa)sa.onclick=()=>{drawSlip();renderOrder()};
   if(!ks.length)return;
   $("ostaff").onclick=openStaff;
   $("oclear").onclick=()=>{CART={};cartSave();syncCart()};
@@ -846,6 +947,19 @@ function renderOrder(){
     const done=()=>{b.textContent=CT[L].copied;setTimeout(()=>{if(!$("order").hidden)b.textContent=CT[L].copy},1500)};
     try{navigator.clipboard.writeText(orderText()).then(done,()=>{})}catch(_){}};
 }
+let SLIP=null;
+const slipSeen=()=>store.get("sibisi.ordered")==="1";
+function drawSlip(){
+  let pool=HANZI;
+  if(SLIP&&HANZI.length>1)pool=HANZI.filter(x=>x.c!==SLIP.c);
+  SLIP=pool[Math.floor(Math.random()*pool.length)];}
+function slipBlock(){
+  if(!slipSeen())return "";
+  const t=T[L];
+  return `<div class="slip">${SLIP?`<div class="slipcard"><b>${esc(SLIP.c)}</b><i>${esc(SLIP.py)}</i>
+      <p>${esc(SLIP[L])}</p></div>
+    <button class="chip more" type="button" id="sagain">${esc(t.slipAgain)}</button>`
+    :`<button class="obtn sec" type="button" id="sdraw">${esc(t.slipT)}</button>`}</div>`}
 function renderStaff(){
   // 中文给店员看，客人自己那门语言放小一号在下面，方便客人指着补充说明
   const sub=x=>L==="zh"?"":`<i class="sl">${esc(x.n2)}${x.o2?" · "+esc(x.o2):""}</i>`;
@@ -861,12 +975,20 @@ function openOrder(){renderOrder();$("order").hidden=false;$("scrim").hidden=fal
   document.body.classList.add("ordering");document.body.style.overflow="hidden"}
 function closeOrder(){$("order").hidden=true;$("scrim").hidden=true;
   document.body.classList.remove("ordering");document.body.style.overflow=""}
-function openStaff(){renderStaff();$("staff").hidden=false;document.body.style.overflow="hidden"}
+function openStaff(){store.set("sibisi.ordered","1");renderStaff();$("staff").hidden=false;document.body.style.overflow="hidden"}
 function closeStaff(){$("staff").hidden=true;document.body.style.overflow=$("order").hidden?"":"hidden"}
 $("cb-go").addEventListener("click",openOrder);
+$("chopb").addEventListener("click",()=>{$("chop").hidden=!$("chop").hidden;renderChop()});
 $("totop").addEventListener("click",()=>scrollTo({top:0,behavior:"smooth"}));
 const topBtn=()=>{$("totop").hidden=scrollY<700};
 addEventListener("scroll",topBtn,{passive:true});topBtn();
+// 来过的人打开菜单时换一句招呼（只存在这台手机上）
+let BACK=false;
+(function(){try{
+  const r=JSON.parse(store.get("sibisi.v")||"null")||{n:0,t:0};
+  if(Date.now()-r.t>2*36e5){BACK=r.n>0;r.n++;r.t=Date.now();store.set("sibisi.v",JSON.stringify(r))}
+  else BACK=r.n>1;
+}catch(e){}})();
 (function(){let l=store.get("lang");
  if(!l){const n=(navigator.language||"es").slice(0,2);l=n==="zh"?"zh":(n==="es"||n==="ca")?"es":"en"}
  L=T[l]?l:"es";render()})();

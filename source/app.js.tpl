@@ -22,6 +22,10 @@ const TOP=__TOP__;
 const FRONT=__FRONT__;
 const GRP=__GRP__;
 const COMBO=__COMBO__;
+const JQ=__JQ__;
+const JQW=__JQW__;
+const HANZI=__HANZI__;
+const CHOP=__CHOP__;
 const POT=c=>c.slice(0,2)==="1-";
 const LI={zh:0,es:1,en:2};
 const eur=(n,l)=>l==="en"?"€"+n.toFixed(2):n.toFixed(2).replace(".",",")+" €";
@@ -53,9 +57,49 @@ const FILD=[
  {id:"M",  lab:l=>woLab("M",l),  ok:d=>!als(d).includes("M")}];
 let FIL=[];
 const dishOk=d=>FIL.every(id=>FILD.find(f=>f.id===id).ok(d));
+// 今日是哪个节气。节气按太阳位置算，全球同一天；元旦到小寒之间算上一年的冬至。
+function jieqi(){
+  const d=new Date(),m=d.getMonth()+1,day=d.getDate();
+  let cur=JQ[JQ.length-1];
+  for(const x of JQ)if(x[0]<m||(x[0]===m&&x[1]<=day))cur=x;
+  return cur}
+// 节气决定挑什么菜：热的 / 炖的 / 清淡的 / 凉爽的 / 辣的
+const JQPICK={
+  hot:  d=>["hm","sopa"].includes(d._s),
+  warm: d=>d.ta.includes("intenso")||d.ta.includes("sabroso"),
+  light:d=>d.ta.includes("suave")||d.ta.includes("agridulce"),
+  cold: d=>["mix","frios"].includes(d._s)||d.ta.includes("fresco")||d.ta.includes("acido"),
+  spicy:d=>fls(d).includes("h")};
+let LUCK=null;
+function pickLucky(){
+  const q=jieqi(),want=JQPICK[q[6]];
+  const all=[];
+  for(const sec of S)for(const d of sec.d){
+    if(d.c==="2-11"||!dishOk(d))continue;
+    all.push(Object.assign({_s:sec.id},d))}
+  let pool=all.filter(want),fb=false;
+  if(!pool.length){pool=all;fb=true}            // 筛选之后没有应季的，就不提节气那句话
+  if(LUCK){const f=pool.filter(x=>x.c!==LUCK.d.c);if(f.length)pool=f}
+  if(!pool.length)return null;
+  return {q:q,fb:fb,d:pool[Math.floor(Math.random()*pool.length)]}}
+function renderLuck(){
+  const box=$("luck");
+  if(!LUCK){box.innerHTML="";box.hidden=true;return}
+  const t=T[L],d=findDish(LUCK.d.c),q=LUCK.q;
+  box.hidden=false;
+  box.innerHTML=`<div class="lq"><b>${esc(t.today)} · ${esc(q[2])}</b> <span>${esc(q[3])}${L==="zh"?"":" · "+esc(L==="es"?q[4]:q[5])}</span></div>
+    ${LUCK.fb?"":`<p>${esc(JQW[q[6]][LI[L]])}</p>`}
+    <div class="lrow">
+      <div class="thumb">${d.img?`<img src="img/${d.img}.jpg" alt="" loading="lazy">`:illo(d.c,"")}<span class="badge">${d.c}</span></div>
+      <div class="lt"><h4>${esc(L==="zh"?d.zh:d[L])}</h4>${DET[d.c]?`<button class="llink" type="button" data-det="${d.c}">${esc(t.seeIt)}</button>`:""}</div>
+      <div class="lr"><b>${eur(d.p,L)}</b>${stepper(d.c,`data-c="${d.c}"`)}</div></div>
+    <button class="chip more" type="button" id="lagain">${esc(t.luckAgain)}</button>`;
+  $("lagain").onclick=()=>{LUCK=pickLucky();renderLuck();
+    $("luck").scrollIntoView({block:"nearest",behavior:"smooth"})};
+}
 function renderFil(){
   const t=T[L],n=S.reduce((a,sec)=>a+sec.d.filter(dishOk).length,0);
-  $("filters").innerHTML=`<span class="qlab">${esc(t.fT)}</span>`
+  $("filters").innerHTML=`<button class="chip luck" type="button" id="lbtn">${esc(t.luck)}</button><span class="qlab">${esc(t.fT)}</span>`
     +FILD.map(f=>`<button class="chip" type="button" data-fil="${f.id}" aria-pressed="${FIL.includes(f.id)}">${esc(f.lab(L))}</button>`).join("")
     +(FIL.length?`<span class="fcount">${esc(t.fCount.replace("%s",n))}</span><button class="chip clr" type="button" data-fil="*">${esc(t.fClear)}</button>`:"");
 }
@@ -139,7 +183,7 @@ function openPick(kind,c){
 function closePick(){$("pick").hidden=true;document.body.style.overflow=$("sheet").hidden&&$("order").hidden?"":"hidden"}
 function render(){
   const t=T[L]; document.documentElement.lang=L==="zh"?"zh-CN":L;
-  $("tagline").textContent=t.tagline; $("h-eye").textContent=t.eye; $("h-title").textContent=t.title;
+  $("tagline").textContent=BACK?t.hiAgain:t.tagline; $("h-eye").textContent=t.eye; $("h-title").textContent=t.title;
   $("h-desc").textContent=t.desc; $("h-from").textContent=t.frm;
   $("steps").innerHTML=t.steps.map(s=>`<li>${esc(s)}</li>`).join("");
   $("first-t").textContent=t.firstT;
@@ -153,12 +197,16 @@ function render(){
   $("f-take").textContent=t.take; $("copy").textContent=t.copy;
   $("phone").href="tel:"+TEL;
   $("totop").setAttribute("aria-label",CT[L].toTop);
+  renderChop();
   $("f-dirs").textContent=t.dirs; $("f-dirs").href=MAP;
   $("f-rev").textContent=t.rev;   $("f-rev").href=REV;
   $("f-all").innerHTML=algRow("G H S Sé P M",true)+`<div style="margin-top:6px">${esc(t.all)}</div>`;
   document.querySelectorAll(".lang button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.l===L));
   const secName=s=>L==="zh"?s.zh:s[L];
   renderFil();
+  $("lbtn").onclick=()=>{LUCK=pickLucky();renderLuck();
+    $("luck").scrollIntoView({block:"nearest",behavior:"smooth"})};
+  renderLuck();
   const SS=S.map(s=>Object.assign({},s,{d:s.d.filter(dishOk)})).filter(s=>s.d.length);
   $("rail").innerHTML=SS.map(s=>`<a href="#${s.id}" data-s="${s.id}">${esc(secName(s))}</a>`).join("")+`<a href="#bebidas" data-s="bebidas">${t.drinks}</a>`;
   let h=SS.length?"":`<p class="fempty">${esc(t.fEmpty)}</p>`;
@@ -212,6 +260,25 @@ function renderPacks(){
         <button class="obtn" type="button" data-pack="${p.id}">${esc(t.packAdd)}</button></div></div>`}).join("")
     +`<small>${esc(t.packNote)}</small>`;
 }
+// 筷子示意图：两根筷子 + 标号的手指位置，和菜品插画同一套配色
+function chopSvg(n){
+  const bg='<rect width="160" height="90" fill="#efe4c8"/>';
+  // 手握左边，筷尖在右边；越往右越细
+  const stk=(y1,y2,w,col)=>`<polygon points="12,${y1-w} 150,${y2-1.6} 150,${y2+1.6} 12,${y1+w}" fill="${col}"/>`;
+  const dot=(x,y,i)=>`<circle cx="${x}" cy="${y}" r="11" fill="#d4482f"/><text x="${x}" y="${y+5}" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">${i}</text>`;
+  const W="#b07c46",G="#dcc9ad";
+  if(n===1)return `<svg viewBox="0 0 160 90" role="img">${bg}${stk(72,60,5,W)}${dot(42,69,1)}${dot(78,66,2)}</svg>`;
+  if(n===2)return `<svg viewBox="0 0 160 90" role="img">${bg}${stk(72,60,5,G)}${stk(34,52,4.5,W)}${dot(36,39,1)}${dot(66,42,2)}${dot(96,46,3)}</svg>`;
+  return `<svg viewBox="0 0 160 90" role="img">${bg}${stk(72,60,5,W)}${stk(26,44,4.5,G)}${stk(44,56,4.5,W)}
+    <path d="M58 26 q-14 14 -2 28" stroke="#d4482f" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    <path d="M50 52 l10 2 -3 -10z" fill="#d4482f"/>
+    <circle cx="148" cy="58" r="8" fill="none" stroke="#3f8f3a" stroke-width="3"/></svg>`}
+function renderChop(){
+  const t=T[L],open=!$("chop").hidden;
+  $("chopb").textContent=t.chopT;
+  $("chopb").setAttribute("aria-expanded",open);
+  $("chop").innerHTML=CHOP.map((x,i)=>`<div class="cstep">${chopSvg(i+1)}<p><b>${i+1}</b>${esc(x[LI[L]])}</p></div>`).join("")
+    +`<small>${esc(t.chopEnd)}</small>`}
 function openDet(c){
   const d=findDish(c);if(!d||!DET[c])return;const t=T[L],lb=LBL[L],x=DET[c][L];
   const rows=["what","story","ing","taste","adj","how","note","who"].filter(k=>x[k]).map(k=>{
@@ -468,12 +535,16 @@ function renderOrder(){
     ${addonBlock()}
     <div class="zhbox"><dt>给店员看 · 中文</dt>${zh}
       <div class="zhrow zhsum"><span>共 ${cCount()} 份</span><span>${eur(cTotal(),"es")}</span></div></div>
+    ${slipBlock()}
     <div class="oact"><button class="obtn" type="button" id="ostaff">${esc(ct.staff)}</button>
       <button class="obtn sec" type="button" id="ocopy">${esc(ct.copy)}</button>
       <button class="obtn sec" type="button" id="oclear">${esc(ct.clear)}</button></div>`
     :`<p class="ohint">${esc(ct.empty)}</p>`}
   </div>`;
   $("oclose").onclick=closeOrder;
+  const sd=$("sdraw"),sa=$("sagain");
+  if(sd)sd.onclick=()=>{drawSlip();renderOrder();$("sagain").scrollIntoView({block:"nearest"})};
+  if(sa)sa.onclick=()=>{drawSlip();renderOrder()};
   if(!ks.length)return;
   $("ostaff").onclick=openStaff;
   $("oclear").onclick=()=>{CART={};cartSave();syncCart()};
@@ -481,6 +552,19 @@ function renderOrder(){
     const done=()=>{b.textContent=CT[L].copied;setTimeout(()=>{if(!$("order").hidden)b.textContent=CT[L].copy},1500)};
     try{navigator.clipboard.writeText(orderText()).then(done,()=>{})}catch(_){}};
 }
+let SLIP=null;
+const slipSeen=()=>store.get("sibisi.ordered")==="1";
+function drawSlip(){
+  let pool=HANZI;
+  if(SLIP&&HANZI.length>1)pool=HANZI.filter(x=>x.c!==SLIP.c);
+  SLIP=pool[Math.floor(Math.random()*pool.length)];}
+function slipBlock(){
+  if(!slipSeen())return "";
+  const t=T[L];
+  return `<div class="slip">${SLIP?`<div class="slipcard"><b>${esc(SLIP.c)}</b><i>${esc(SLIP.py)}</i>
+      <p>${esc(SLIP[L])}</p></div>
+    <button class="chip more" type="button" id="sagain">${esc(t.slipAgain)}</button>`
+    :`<button class="obtn sec" type="button" id="sdraw">${esc(t.slipT)}</button>`}</div>`}
 function renderStaff(){
   // 中文给店员看，客人自己那门语言放小一号在下面，方便客人指着补充说明
   const sub=x=>L==="zh"?"":`<i class="sl">${esc(x.n2)}${x.o2?" · "+esc(x.o2):""}</i>`;
@@ -496,12 +580,20 @@ function openOrder(){renderOrder();$("order").hidden=false;$("scrim").hidden=fal
   document.body.classList.add("ordering");document.body.style.overflow="hidden"}
 function closeOrder(){$("order").hidden=true;$("scrim").hidden=true;
   document.body.classList.remove("ordering");document.body.style.overflow=""}
-function openStaff(){renderStaff();$("staff").hidden=false;document.body.style.overflow="hidden"}
+function openStaff(){store.set("sibisi.ordered","1");renderStaff();$("staff").hidden=false;document.body.style.overflow="hidden"}
 function closeStaff(){$("staff").hidden=true;document.body.style.overflow=$("order").hidden?"":"hidden"}
 $("cb-go").addEventListener("click",openOrder);
+$("chopb").addEventListener("click",()=>{$("chop").hidden=!$("chop").hidden;renderChop()});
 $("totop").addEventListener("click",()=>scrollTo({top:0,behavior:"smooth"}));
 const topBtn=()=>{$("totop").hidden=scrollY<700};
 addEventListener("scroll",topBtn,{passive:true});topBtn();
+// 来过的人打开菜单时换一句招呼（只存在这台手机上）
+let BACK=false;
+(function(){try{
+  const r=JSON.parse(store.get("sibisi.v")||"null")||{n:0,t:0};
+  if(Date.now()-r.t>2*36e5){BACK=r.n>0;r.n++;r.t=Date.now();store.set("sibisi.v",JSON.stringify(r))}
+  else BACK=r.n>1;
+}catch(e){}})();
 (function(){let l=store.get("lang");
  if(!l){const n=(navigator.language||"es").slice(0,2);l=n==="zh"?"zh":(n==="es"||n==="ca")?"es":"en"}
  L=T[l]?l:"es";render()})();
