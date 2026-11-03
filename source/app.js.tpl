@@ -25,6 +25,7 @@ const COMBO=__COMBO__;
 const JQ=__JQ__;
 const JQW=__JQW__;
 const HANZI=__HANZI__;
+const SAYING=__SAYING__;
 const CHOP=__CHOP__;
 const POT=c=>c.slice(0,2)==="1-";
 const LI={zh:0,es:1,en:2};
@@ -57,6 +58,26 @@ const FILD=[
  {id:"M",  lab:l=>woLab("M",l),  ok:d=>!als(d).includes("M")}];
 let FIL=[];
 const dishOk=d=>FIL.every(id=>FILD.find(f=>f.id===id).ok(d));
+// 节气图标：一笔一画的小符号，说明这个节气是什么意思
+const JQI={
+ sprout:'<path d="M12 21V11"/><path d="M12 13c-4 0-6-3-6-6 4 0 6 3 6 6z"/><path d="M12 15c4 0 6-3 6-6-4 0-6 3-6 6z"/>',
+ rain:'<path d="M7 13.5a4 4 0 0 1 .6-8 5.5 5.5 0 0 1 10.3 1.6A3.5 3.5 0 0 1 17.5 13.5z"/><path d="M8 17l-1 3M12 17l-1 3M16 17l-1 3"/>',
+ bug:'<ellipse cx="12" cy="14" rx="4.5" ry="6"/><path d="M12 8V5M9.5 6L8 3.5M14.5 6L16 3.5M7.5 12H4M7.5 16.5H4M16.5 12H20M16.5 16.5H20"/>',
+ balance:'<circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor" stroke="none"/>',
+ grain:'<path d="M12 21V8"/><path d="M12 8c0-3 2-5 4.5-5 0 3-2 5-4.5 5zM12 8c0-3-2-5-4.5-5 0 3 2 5 4.5 5zM12 14c0-3 2-5 4.5-5 0 3-2 5-4.5 5zM12 14c0-3-2-5-4.5-5 0 3 2 5 4.5 5z"/>',
+ sun:'<circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.6M12 19.4V22M2 12h2.6M19.4 12H22M5 5l1.9 1.9M17.1 17.1L19 19M19 5l-1.9 1.9M6.9 17.1L5 19"/>',
+ hotsun:'<circle cx="12" cy="8.5" r="4"/><path d="M12 1.5v2M2.5 8.5h2M19.5 8.5h2M5.2 1.8l1.4 1.4M18.8 1.8l-1.4 1.4"/><path d="M3 16c2-1.6 4 1.6 6 0s4 1.6 6 0 2 1.6 3 .4M3 20c2-1.6 4 1.6 6 0s4 1.6 6 0 2 1.6 3 .4"/>',
+ leaf:'<path d="M5 19.5C5 10.5 11 5 19.5 5c0 8.5-5.5 14.5-14.5 14.5z"/><path d="M19.5 5L9 15.5"/>',
+ fall:'<path d="M15 3.5c4 3 4.5 8 1 11.5s-8.5 3-11.5-1c3-3.5 7-6 10.5-10.5z"/><path d="M4.5 20.5c3-2 5.5-4.5 8-8"/>',
+ dew:'<path d="M12 4c3 4.5 5 7 5 9.5A5 5 0 0 1 7 13.5C7 11 9 8.5 12 4z"/>',
+ frost:'<path d="M3 21h18"/><path d="M12 4v13M5.4 7.8l13.2 7.6M18.6 7.8L5.4 15.4"/>',
+ snow:'<path d="M12 2v20M3.3 7l17.4 10M20.7 7L3.3 17"/><path d="M9.4 3.6L12 6.2l2.6-2.6M9.4 20.4L12 17.8l2.6 2.6"/>',
+ ice:'<path d="M2.5 4.5h19"/><path d="M6.5 4.5L8 15l1.5-10.5M12.5 4.5L14 21l1.5-16.5M17.5 4.5L18.6 12l1.1-7.5"/>',
+ moon:'<path d="M20.5 14.8A8.6 8.6 0 0 1 9.2 3.5a8.6 8.6 0 1 0 11.3 11.3z"/>'};
+const EGGI={chop:'<path d="M4.5 20.5L17.5 3.5M9 20.5L20 6"/>',
+ slip:'<rect x="3.5" y="5.5" width="17" height="13" rx="2.5"/><path d="M7.5 10h9M7.5 13.5h5.5"/>'};
+const eggIcon=k=>`<svg class="eggi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${EGGI[k]}</svg>`;
+const jqIcon=(k,cls)=>`<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${JQI[k]||JQI.sun}</svg>`;
 // 今日是哪个节气。节气按太阳位置算，全球同一天；元旦到小寒之间算上一年的冬至。
 function jieqi(){
   const d=new Date(),m=d.getMonth()+1,day=d.getDate();
@@ -83,11 +104,18 @@ function pickLucky(){
   if(!pool.length)return null;
   return {q:q,fb:fb,d:pool[Math.floor(Math.random()*pool.length)]}}
 function renderLuck(){
-  const box=$("luck");
-  if(!LUCK){box.innerHTML="";box.hidden=true;return}
-  const t=T[L],d=findDish(LUCK.d.c),q=LUCK.q;
-  box.hidden=false;
-  box.innerHTML=`<div class="lq"><b>${esc(t.today)} · ${esc(q[2])}</b> <span>${esc(q[3])}${L==="zh"?"":" · "+esc(L==="es"?q[4]:q[5])}</span></div>
+  const box=$("luck"),t=T[L];box.hidden=false;
+  if(!LUCK){
+    const q0=jieqi();
+    box.className="lask";
+    box.innerHTML=`<button class="lbtn" type="button" id="lbtn">${jqIcon(q0[7],"lic")}
+      <span class="lbt"><b>${esc(t.luckAsk)}</b><em>${esc(t.luckSub.replace("%s",q0[2]))}</em></span></button>`;
+    $("lbtn").onclick=()=>{LUCK=pickLucky();renderLuck();
+      $("luck").scrollIntoView({block:"nearest",behavior:"smooth"})};
+    return}
+  const d=findDish(LUCK.d.c),q=LUCK.q;
+  box.className="luck";
+  box.innerHTML=`<div class="lq">${jqIcon(q[7],"jqi")}<b>${esc(t.today)} · ${esc(q[2])}</b> <span>${esc(q[3])}${L==="zh"?"":" · "+esc(L==="es"?q[4]:q[5])}</span></div>
     ${LUCK.fb?"":`<p>${esc(JQW[q[6]][LI[L]])}</p>`}
     <div class="lrow">
       <div class="thumb">${d.img?`<img src="img/${d.img}.jpg" alt="" loading="lazy">`:illo(d.c,"")}<span class="badge">${d.c}</span></div>
@@ -99,7 +127,7 @@ function renderLuck(){
 }
 function renderFil(){
   const t=T[L],n=S.reduce((a,sec)=>a+sec.d.filter(dishOk).length,0);
-  $("filters").innerHTML=`<button class="chip luck" type="button" id="lbtn">${esc(t.luck)}</button><span class="qlab">${esc(t.fT)}</span>`
+  $("filters").innerHTML=`<span class="qlab">${esc(t.fT)}</span>`
     +FILD.map(f=>`<button class="chip" type="button" data-fil="${f.id}" aria-pressed="${FIL.includes(f.id)}">${esc(f.lab(L))}</button>`).join("")
     +(FIL.length?`<span class="fcount">${esc(t.fCount.replace("%s",n))}</span><button class="chip clr" type="button" data-fil="*">${esc(t.fClear)}</button>`:"");
 }
@@ -185,7 +213,7 @@ function render(){
   const t=T[L]; document.documentElement.lang=L==="zh"?"zh-CN":L;
   $("tagline").textContent=BACK?t.hiAgain:t.tagline;
   {const q=jieqi();                                   // 报头下面的今日节气，每天自己变
-   $("jqbar").innerHTML=`<b>${esc(t.today)} · <span class="jqz">${esc(q[2])}</span></b> ${esc(q[3])}${L==="zh"?"":" · "+esc(L==="es"?q[4]:q[5])} · ${esc(JQW[q[6]][LI[L]])}`;} $("h-eye").textContent=t.eye; $("h-title").textContent=t.title;
+   $("jqbar").innerHTML=jqIcon(q[7],"jqi")+`<span><b>${esc(t.today)} · <span class="jqz">${esc(q[2])}</span></b> ${esc(q[3])}${L==="zh"?"":" · "+esc(L==="es"?q[4]:q[5])} · ${esc(JQW[q[6]][LI[L]])}</span>`;} $("h-eye").textContent=t.eye; $("h-title").textContent=t.title;
   $("h-desc").textContent=t.desc; $("h-from").textContent=t.frm;
   $("steps").innerHTML=t.steps.map(s=>`<li>${esc(s)}</li>`).join("");
   $("first-t").textContent=t.firstT;
@@ -199,15 +227,12 @@ function render(){
   $("f-take").textContent=t.take; $("copy").textContent=t.copy;
   $("phone").href="tel:"+TEL;
   $("totop").setAttribute("aria-label",CT[L].toTop);
-  renderChop();
   $("f-dirs").textContent=t.dirs; $("f-dirs").href=MAP;
   $("f-rev").textContent=t.rev;   $("f-rev").href=REV;
   $("f-all").innerHTML=algRow("G H S Sé P M",true)+`<div style="margin-top:6px">${esc(t.all)}</div>`;
   document.querySelectorAll(".lang button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.l===L));
   const secName=s=>L==="zh"?s.zh:s[L];
   renderFil();
-  $("lbtn").onclick=()=>{LUCK=pickLucky();renderLuck();
-    $("luck").scrollIntoView({block:"nearest",behavior:"smooth"})};
   renderLuck();
   const SS=S.map(s=>Object.assign({},s,{d:s.d.filter(dishOk)})).filter(s=>s.d.length);
   $("rail").innerHTML=SS.map(s=>`<a href="#${s.id}" data-s="${s.id}">${esc(secName(s))}</a>`).join("")+`<a href="#bebidas" data-s="bebidas">${t.drinks}</a>`;
@@ -275,12 +300,11 @@ function chopSvg(n){
     <path d="M58 26 q-14 14 -2 28" stroke="#d4482f" stroke-width="3.5" fill="none" stroke-linecap="round"/>
     <path d="M50 52 l10 2 -3 -10z" fill="#d4482f"/>
     <circle cx="148" cy="58" r="8" fill="none" stroke="#3f8f3a" stroke-width="3"/></svg>`}
-function renderChop(){
-  const t=T[L],open=!$("chop").hidden;
-  $("chopb").textContent=t.chopT;
-  $("chopb").setAttribute("aria-expanded",open);
-  $("chop").innerHTML=CHOP.map((x,i)=>`<div class="cstep">${chopSvg(i+1)}<p><b>${i+1}</b>${esc(x[LI[L]])}</p></div>`).join("")
-    +`<small>${esc(t.chopEnd)}</small>`}
+let CHOPOPEN=false;
+function chopBlock(){
+  const t=T[L];
+  return `<button class="eggb" type="button" data-chop="1" aria-expanded="${CHOPOPEN}">${eggIcon("chop")}${esc(t.chopT)}</button>`
+    +(CHOPOPEN?`<div class="chop">${CHOP.map((x,i)=>`<div class="cstep">${chopSvg(i+1)}<p><b>${i+1}</b>${esc(x[LI[L]])}</p></div>`).join("")}<small>${esc(t.chopEnd)}</small></div>`:"")}
 function openDet(c){
   const d=findDish(c);if(!d||!DET[c])return;const t=T[L],lb=LBL[L],x=DET[c][L];
   const rows=["what","story","ing","taste","adj","how","note","who"].filter(k=>x[k]).map(k=>{
@@ -322,6 +346,11 @@ document.addEventListener("click",e=>{
     for(const[k,q]of p.items){const o=packOpt(k);
       cartBump(k,q,o.dr?{dr:o.dr,dv:o.dv}:{c:o.c,sz:o.sz})}
     flyToCart(f);return}
+  const ch=e.target.closest("[data-chop]");
+  if(ch){e.preventDefault();CHOPOPEN=!CHOPOPEN;renderOrder();return}
+  const sl=e.target.closest("[data-slip]");
+  if(sl){e.preventDefault();drawSlip();renderOrder();
+    const c=document.querySelector(".slipcard");if(c)c.scrollIntoView({block:"nearest",behavior:"smooth"});return}
   const sp=e.target.closest("[data-split]");
   if(sp){e.preventDefault();splitLine(sp.dataset.split);return}
   const oe=e.target.closest("[data-oedit]");
@@ -537,16 +566,13 @@ function renderOrder(){
     ${addonBlock()}
     <div class="zhbox"><dt>给店员看 · 中文</dt>${zh}
       <div class="zhrow zhsum"><span>共 ${cCount()} 份</span><span>${eur(cTotal(),"es")}</span></div></div>
-    ${slipBlock()}
     <div class="oact"><button class="obtn" type="button" id="ostaff">${esc(ct.staff)}</button>
       <button class="obtn sec" type="button" id="ocopy">${esc(ct.copy)}</button>
-      <button class="obtn sec" type="button" id="oclear">${esc(ct.clear)}</button></div>`
+      <button class="obtn sec" type="button" id="oclear">${esc(ct.clear)}</button></div>
+    <div class="egg">${chopBlock()}${slipBlock()}</div>`
     :`<p class="ohint">${esc(ct.empty)}</p>`}
   </div>`;
   $("oclose").onclick=closeOrder;
-  const sd=$("sdraw"),sa=$("sagain");
-  if(sd)sd.onclick=()=>{drawSlip();renderOrder();$("sagain").scrollIntoView({block:"nearest"})};
-  if(sa)sa.onclick=()=>{drawSlip();renderOrder()};
   if(!ks.length)return;
   $("ostaff").onclick=openStaff;
   $("oclear").onclick=()=>{CART={};cartSave();syncCart()};
@@ -556,17 +582,26 @@ function renderOrder(){
 }
 let SLIP=null;
 const slipSeen=()=>store.get("sibisi.ordered")==="1";
+const slipDeck=()=>L==="zh"?SAYING:HANZI;        // 中文客人抽中国话，其他语言抽菜单上的汉字
 function drawSlip(){
-  let pool=HANZI;
-  if(SLIP&&HANZI.length>1)pool=HANZI.filter(x=>x.c!==SLIP.c);
+  const deck=slipDeck();
+  let pool=deck;
+  if(SLIP&&deck.length>1)pool=deck.filter(x=>x.zh!==SLIP.zh&&x.c!==SLIP.c);
+  if(!pool.length)pool=deck;
   SLIP=pool[Math.floor(Math.random()*pool.length)];}
+function slipCard(){
+  const t=T[L];
+  if(L==="zh"&&!SLIP.m)drawSlip();              // 换了语言就换一副牌
+  if(L!=="zh"&&!SLIP.c)drawSlip();
+  return SLIP.m
+    ?`<div class="slipcard say"><b>${esc(SLIP.zh)}</b><p>${esc(SLIP.m)}</p>
+       <div class="sayes"><dt>${esc(t.sayEs)}</dt>${esc(SLIP.es)}</div></div>`
+    :`<div class="slipcard"><b>${esc(SLIP.c)}</b><i>${esc(SLIP.py)}</i><p>${esc(SLIP[L])}</p></div>`}
 function slipBlock(){
   if(!slipSeen())return "";
   const t=T[L];
-  return `<div class="slip">${SLIP?`<div class="slipcard"><b>${esc(SLIP.c)}</b><i>${esc(SLIP.py)}</i>
-      <p>${esc(SLIP[L])}</p></div>
-    <button class="chip more" type="button" id="sagain">${esc(t.slipAgain)}</button>`
-    :`<button class="obtn sec" type="button" id="sdraw">${esc(t.slipT)}</button>`}</div>`}
+  return SLIP?`${slipCard()}<button class="chip more" type="button" data-slip="1">${esc(t.slipAgain)}</button>`
+            :`<button class="eggb" type="button" data-slip="1">${eggIcon("slip")}${esc(t.slipT)}</button>`}
 function renderStaff(){
   // 中文给店员看，客人自己那门语言放小一号在下面，方便客人指着补充说明
   const sub=x=>L==="zh"?"":`<i class="sl">${esc(x.n2)}${x.o2?" · "+esc(x.o2):""}</i>`;
@@ -583,9 +618,9 @@ function openOrder(){renderOrder();$("order").hidden=false;$("scrim").hidden=fal
 function closeOrder(){$("order").hidden=true;$("scrim").hidden=true;
   document.body.classList.remove("ordering");document.body.style.overflow=""}
 function openStaff(){store.set("sibisi.ordered","1");renderStaff();$("staff").hidden=false;document.body.style.overflow="hidden"}
-function closeStaff(){$("staff").hidden=true;document.body.style.overflow=$("order").hidden?"":"hidden"}
+function closeStaff(){$("staff").hidden=true;document.body.style.overflow=$("order").hidden?"":"hidden";
+  if(!$("order").hidden)renderOrder()}   // 点过店员页之后，饭后签才会出现，得重画一次
 $("cb-go").addEventListener("click",openOrder);
-$("chopb").addEventListener("click",()=>{$("chop").hidden=!$("chop").hidden;renderChop()});
 $("totop").addEventListener("click",()=>scrollTo({top:0,behavior:"smooth"}));
 const topBtn=()=>{$("totop").hidden=scrollY<700};
 addEventListener("scroll",topBtn,{passive:true});topBtn();
