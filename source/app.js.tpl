@@ -77,6 +77,54 @@ const JQI={
 const EGGI={chop:'<path d="M4.5 20.5L17.5 3.5M9 20.5L20 6"/>',
  slip:'<rect x="3.5" y="5.5" width="17" height="13" rx="2.5"/><path d="M7.5 10h9M7.5 13.5h5.5"/>'};
 const eggIcon=k=>`<svg class="eggi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${EGGI[k]}</svg>`;
+// 节气小景：分层的 SVG 山水（天色 + 远近山 + 雾 + 当季景物），按季节换一张
+const SCENE={
+ light:{ink:"#3f5b36",sky:["#f2f8ea","#cfe4c4"],far:"#8db47c",near:"#5e8a52"},
+ spicy:{ink:"#2f4f48",sky:["#eef4f2","#c3d9d2"],far:"#8aa9a0",near:"#5a7f75"},
+ cold: {ink:"#1f4d5c",sky:["#e6f4f7","#a8d9e4"],far:"#73b6c6",near:"#3d8aa0"},
+ warm: {ink:"#6b3b12",sky:["#fbf2e2","#edd6ae"],far:"#c9a269",near:"#a4692a"},
+ hot:  {ink:"#2d3f52",sky:["#eff3f7","#c6d3df"],far:"#93a7ba",near:"#5d7489"}};
+const enc=x=>encodeURIComponent(x).replace(/\(/g,"%28").replace(/\)/g,"%29").replace(/'/g,"%27");
+function jqScene(b){
+  const c=SCENE[b]||SCENE.warm,W=340,H=120;
+  const mt=(pts,fill,op)=>`<path d="M0 ${H}${pts}L${W} ${H}Z" fill="${fill}" opacity="${op}"/>`;
+  const mist=(x,y,rx,ry,o)=>`<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="#fff" opacity="${o}"/>`;
+  let art="";
+  if(b==="light")      // 春：柳条 + 燕子
+    art=`<path d="M0 78q26-16 54 2t58-10 56 14 60-12 58 10 54-4" stroke="${c.near}" stroke-width="1.4" fill="none" opacity=".35"/>`
+      +`<path d="M250 0q24 14 30 34" stroke="${c.near}" stroke-width="2.4" fill="none" opacity=".75"/>`
+      +[0,1,2,3,4,5].map(i=>`<path d="M${256+i*6} ${8+i*5}q-9 14-6 26" stroke="${c.near}" stroke-width="1.5" fill="none" opacity=".6"/>`).join("")
+      +`<path d="M168 34q7-9 10-2q3-7 10 1" stroke="${c.ink}" stroke-width="2" fill="none" opacity=".6" stroke-linecap="round"/>`
+      +`<path d="M202 54q5-7 8-1.5q2.5-5.5 8 .5" stroke="${c.ink}" stroke-width="1.7" fill="none" opacity=".45" stroke-linecap="round"/>`;
+  else if(b==="spicy") // 清明谷雨：烟雨 + 小船
+    art=[...Array(26)].map((_,i)=>`<path d="M${8+i*13} ${6+(i%4)*9}l-9 20" stroke="#fff" stroke-width="1.3" opacity=".55"/>`).join("")
+      +`<path d="M232 100q16 7 34 0-5 7-17 7t-17-7z" fill="${c.ink}" opacity=".7"/>`
+      +`<path d="M249 98V80M249 80l14 14h-14" fill="${c.ink}" opacity=".55" stroke="${c.ink}" stroke-width="1.4"/>`;
+  else if(b==="cold")  // 夏：烈日 + 水纹 + 荷叶
+    art=`<circle cx="276" cy="34" r="19" fill="#f6b73c" opacity=".85"/>`
+      +[0,1,2].map(i=>`<path d="M0 ${96+i*8}q30-6 60 0t60 0 60 0 60 0 60 0" stroke="#fff" stroke-width="1.5" fill="none" opacity=".5"/>`).join("")
+      +`<ellipse cx="54" cy="96" rx="30" ry="11" fill="${c.near}" opacity=".7"/><path d="M54 96l-22-6" stroke="#fff" stroke-width="1.3" opacity=".6"/>`
+      +`<ellipse cx="104" cy="106" rx="20" ry="7" fill="${c.near}" opacity=".5"/>`;
+  else if(b==="warm"){ // 秋：芦苇 + 落叶
+    const leaf=(x,y,r,sc)=>`<g transform="translate(${x} ${y}) rotate(${r}) scale(${sc})"><path d="M0 0c7-8 18-8 24 0-6 8-17 8-24 0z" fill="#c0601f" opacity=".82"/><path d="M1 0h22" stroke="#7d3a10" stroke-width="1.1" opacity=".45" fill="none"/></g>`;
+    art=`<path d="M298 118q7-34-3-52M312 118q2-30 9-44M286 118q9-24 7-36" stroke="${c.near}" stroke-width="1.8" fill="none" opacity=".75"/>`
+      +`<g fill="${c.near}" opacity=".7"><ellipse cx="295" cy="63" rx="3" ry="8" transform="rotate(-12 295 63)"/><ellipse cx="321" cy="72" rx="2.6" ry="7" transform="rotate(10 321 72)"/><ellipse cx="293" cy="80" rx="2.4" ry="6" transform="rotate(-18 293 80)"/></g>`
+      +leaf(222,20,-24,1)+leaf(258,44,34,.78)+leaf(192,56,-8,.62)}
+  else                 // 冬：雪山 + 枯枝 + 雪
+    art=`<path d="M64 60l16-18 16 18q-16 7-32 0zM196 52l18-20 18 20q-18 8-36 0z" fill="#fff" opacity=".85"/>`
+      +`<path d="M340 6q-34 10-50 34" stroke="${c.ink}" stroke-width="2.2" fill="none" opacity=".6"/>`
+      +`<path d="M318 14q-6 12-4 22M300 24q-4 10 0 18" stroke="${c.ink}" stroke-width="1.5" fill="none" opacity=".45"/>`
+      +[[40,26,3],[88,14,2.2],[130,40,2.6],[168,20,2],[214,70,2.4],[256,52,2],[22,62,2.2],[106,70,1.8]]
+        .map(([x,y,r])=>`<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" opacity=".9"/>`).join("");
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`
+   +`<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c.sky[0]}"/><stop offset="1" stop-color="${c.sky[1]}"/></linearGradient></defs>`
+   +`<rect width="${W}" height="${H}" fill="url(#g)"/>`
+   +mt(" L40 58 L78 80 L120 48 L166 84 L212 60 L258 88 L302 64 L340 88 ",c.far,".45")
+   +mt(" L52 78 L96 98 L150 72 L202 100 L252 80 L300 104 L340 86 ",c.near,".42")
+   +mist(110,90,120,9,".55")+mist(248,104,96,8,".45")+art
+   +`</svg>`;
+  return {ink:c.ink,
+    css:`background-image:linear-gradient(95deg,rgba(255,255,255,.92) 0%,rgba(255,255,255,.72) 42%,rgba(255,255,255,.12) 74%,rgba(255,255,255,0) 100%),url('data:image/svg+xml,${enc(svg)}');background-size:cover;background-position:center`}}
 const jqIcon=(k,cls)=>`<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${JQI[k]||JQI.sun}</svg>`;
 // 今日是哪个节气。节气按太阳位置算，全球同一天；元旦到小寒之间算上一年的冬至。
 function jieqi(){
@@ -107,15 +155,20 @@ function renderLuck(){
   const box=$("luck"),t=T[L];box.hidden=false;
   if(!LUCK){
     const q0=jieqi();
-    box.className="lask";
-    box.innerHTML=`<button class="lbtn" type="button" id="lbtn">${jqIcon(q0[7],"lic")}
+    box.className="lask";box.removeAttribute("style");
+    const sc=jqScene(q0[6]);
+    box.innerHTML=`<button class="lbtn" type="button" id="lbtn" style="${sc.css};color:${sc.ink}">${jqIcon(q0[7],"lic")}
       <span class="lbt"><b>${esc(t.luckAsk)}</b><em>${esc(t.luckSub.replace("%s",q0[2]))}</em></span></button>`;
     $("lbtn").onclick=()=>{LUCK=pickLucky();renderLuck();
       $("luck").scrollIntoView({block:"nearest",behavior:"smooth"})};
     return}
   const d=findDish(LUCK.d.c),q=LUCK.q;
-  box.className="luck";
-  box.innerHTML=`<div class="lq">${jqIcon(q[7],"jqi")}<b>${esc(t.today)} · ${esc(q[2])}</b> <span>${esc(q[3])}${L==="zh"?"":" · "+esc(L==="es"?q[4]:q[5])}</span></div>
+  box.className="luck";box.removeAttribute("style");
+  const sc=jqScene(q[6]);
+  box.innerHTML=`<div class="lban" style="${sc.css};color:${sc.ink}">
+     <span class="lbd">${jqIcon(q[7],"jqi")}${esc(t.today)}</span>
+     <b class="lbz">${esc(q[2])}</b>
+     <span class="lbp">${esc(q[3])}${L==="zh"?"":" · "+esc(L==="es"?q[4]:q[5])}</span></div>
     ${LUCK.fb?"":`<p>${esc(JQW[q[6]][LI[L]])}</p>`}
     <div class="lrow">
       <div class="thumb">${d.img?`<img src="img/${d.img}.jpg" alt="" loading="lazy">`:illo(d.c,"")}<span class="badge">${d.c}</span></div>
@@ -349,7 +402,9 @@ document.addEventListener("click",e=>{
   const ch=e.target.closest("[data-chop]");
   if(ch){e.preventDefault();CHOPOPEN=!CHOPOPEN;renderOrder();return}
   const sl=e.target.closest("[data-slip]");
-  if(sl){e.preventDefault();drawSlip();renderOrder();
+  if(sl){e.preventDefault();drawSlip();
+    if(!$("order").hidden)renderOrder();
+    if(!$("staff").hidden)renderStaff();
     const c=document.querySelector(".slipcard");if(c)c.scrollIntoView({block:"nearest",behavior:"smooth"});return}
   const sp=e.target.closest("[data-split]");
   if(sp){e.preventDefault();splitLine(sp.dataset.split);return}
@@ -607,7 +662,8 @@ function renderStaff(){
   const sub=x=>L==="zh"?"":`<i class="sl">${esc(x.n2)}${x.o2?" · "+esc(x.o2):""}</i>`;
   $("staff").innerHTML=`<div class="sx"><span>${esc(CT.zh.staffNote)}</span><button type="button" id="sclose" aria-label="关闭">×</button></div>
    ${zhGroups().map(g=>`<h4 class="sg">${g.lab}</h4><ul>${g.rows.map(x=>`<li><span>${esc(x.n)}${x.o?`<em>${x.o}</em>`:""}${sub(x)}</span><b>×${x.q}</b></li>`).join("")}</ul>`).join("")}
-   <div class="stot"><span>共 ${cCount()} 份</span><b>${eur(cTotal(),"es")}</b></div>`;
+   <div class="stot"><span>共 ${cCount()} 份</span><b>${eur(cTotal(),"es")}</b></div>
+   <div class="sgift">${slipBlock()}</div>`;
   $("sclose").onclick=closeStaff;
 }
 const orderText=()=>["Sibisi Ramen"].concat(

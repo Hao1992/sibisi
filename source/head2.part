@@ -194,18 +194,19 @@ section{scroll-margin-top:64px;padding-top:22px}
 .jqi{flex:none;width:22px;height:22px;color:var(--red);margin-top:1px}
 .jqbar b{color:var(--ink)}
 .jqbar .jqz{font-family:var(--f-zh);font-weight:800}
-.luck{margin-top:10px;border:1.5px dashed var(--red);border-radius:16px;padding:12px 14px;display:grid;gap:8px}
+.luck{margin-top:10px;border:1.5px solid var(--line);border-radius:16px;padding:0 14px 13px;display:grid;gap:8px;overflow:hidden}
 .lask{margin-top:10px}
-.lbtn{width:100%;display:flex;align-items:center;gap:12px;text-align:left;cursor:pointer;
-  background:var(--red-soft);border:1.5px solid var(--red);border-radius:16px;padding:13px 14px;color:var(--ink);font:inherit}
-.lic{flex:none;width:34px;height:34px;color:var(--red)}
+.lbtn{width:100%;min-height:86px;display:flex;align-items:center;gap:12px;text-align:left;cursor:pointer;
+  border:0;border-radius:16px;padding:14px 16px;font:inherit}
+.lic{flex:none;width:34px;height:34px;opacity:.85}
 .lbt{min-width:0}
-.lbt b{display:block;font-size:15.5px;font-weight:800;color:var(--red)}
-.lbt em{display:block;margin-top:2px;font-style:normal;font-size:12.5px;font-weight:600;color:var(--muted);line-height:1.4}
-.lq{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-.lq .jqi{width:20px;height:20px}
-.lq b{font-size:14.5px}
-.lq span{font-size:12px;font-weight:700;color:var(--muted)}
+.lbt b{display:block;font-size:16px;font-weight:800}
+.lbt em{display:block;margin-top:3px;font-style:normal;font-size:12.5px;font-weight:700;opacity:.8;line-height:1.4}
+.lban{margin:0 -14px;padding:16px;min-height:112px;display:flex;flex-direction:column;justify-content:center;gap:1px}
+.lbd{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:800;letter-spacing:.14em;opacity:.7}
+.lbd .jqi{width:15px;height:15px}
+.lbz{font-family:var(--f-zh);font-size:32px;font-weight:700;line-height:1.15;letter-spacing:.05em}
+.lbp{font-size:12px;font-weight:700;opacity:.78}
 .luck p{margin:0;font-size:13px;color:var(--muted);line-height:1.45}
 .lrow{display:grid;grid-template-columns:56px 1fr auto;gap:10px;align-items:center}
 .luck .thumb{width:56px;height:56px;border-radius:12px}
@@ -323,6 +324,14 @@ body.detailing .totop,body.ordering .totop{display:none}
 .staff li b{font-size:26px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .staff .stot{display:flex;justify-content:space-between;align-items:baseline;margin-top:14px;font-size:22px;font-weight:800}
 .staff .stot b{font-size:30px;color:#d42320;font-variant-numeric:tabular-nums}
+.sgift{margin-top:26px;padding-top:18px;border-top:1px dashed #ddd4bf;display:grid;gap:10px;justify-items:start;font-family:var(--f-body)}
+.staff .eggb{background:#fdf8ec;border-color:#d42320;color:#d42320}
+.staff .slipcard{background:#fdf8ec;border-color:#ddd4bf;color:#17140f}
+.staff .slipcard b{color:#d42320}
+.staff .slipcard i,.staff .slipcard p{color:#17140f}
+.staff .sayes{color:#6a635a;border-top-color:#ddd4bf}
+.staff .sayes dt{color:#d42320}
+.staff .chip.more{background:#fdf8ec;border-color:#d42320;color:#d42320}
 @media (max-width:380px){.steps{grid-template-columns:1fr}.dish{grid-template-columns:60px 1fr auto}.thumb{width:60px;height:60px}}
 @media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
 </style>
@@ -349,10 +358,10 @@ body.detailing .totop,body.ordering .totop{display:none}
     </div>
   </article>
 
+  <div class="promise" id="promise"></div>
   <ol class="steps" id="steps"></ol>
   <div class="first"><b id="first-t"></b><ul id="first"></ul></div>
   <div class="packs" id="packs"></div>
-  <div class="promise" id="promise"></div>
 
   <nav class="rail" id="rail"></nav>
   <div class="fbar" id="filters"></div>
