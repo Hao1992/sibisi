@@ -183,7 +183,9 @@ function openPick(kind,c){
 function closePick(){$("pick").hidden=true;document.body.style.overflow=$("sheet").hidden&&$("order").hidden?"":"hidden"}
 function render(){
   const t=T[L]; document.documentElement.lang=L==="zh"?"zh-CN":L;
-  $("tagline").textContent=BACK?t.hiAgain:t.tagline; $("h-eye").textContent=t.eye; $("h-title").textContent=t.title;
+  $("tagline").textContent=BACK?t.hiAgain:t.tagline;
+  {const q=jieqi();                                   // 报头下面的今日节气，每天自己变
+   $("jqbar").innerHTML=`<b>${esc(t.today)} · <span class="jqz">${esc(q[2])}</span></b> ${esc(q[3])}${L==="zh"?"":" · "+esc(L==="es"?q[4]:q[5])} · ${esc(JQW[q[6]][LI[L]])}`;} $("h-eye").textContent=t.eye; $("h-title").textContent=t.title;
   $("h-desc").textContent=t.desc; $("h-from").textContent=t.frm;
   $("steps").innerHTML=t.steps.map(s=>`<li>${esc(s)}</li>`).join("");
   $("first-t").textContent=t.firstT;

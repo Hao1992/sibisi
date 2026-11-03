@@ -201,6 +201,9 @@ section{scroll-margin-top:64px;padding-top:22px}
 .fbar .fcount{font-size:12.5px;font-weight:700;color:var(--muted)}
 .fempty{margin:22px 0;color:var(--muted);font-size:14px}
 .fbar .chip.luck{border-color:var(--red);color:var(--red);font-weight:800}
+.jqbar{margin:10px 0 0;font-size:12.5px;line-height:1.5;color:var(--muted)}
+.jqbar b{color:var(--ink)}
+.jqbar .jqz{font-family:var(--f-zh);font-weight:800}
 .luck{margin-top:10px;border:1.5px dashed var(--red);border-radius:16px;padding:12px 14px;display:grid;gap:8px}
 .lq b{font-size:14.5px}
 .lq span{font-size:12px;font-weight:700;color:var(--muted)}
@@ -326,6 +329,8 @@ body.detailing .totop,body.ordering .totop{display:none}
       <button id="l-es" data-l="es">ES</button><button id="l-en" data-l="en">EN</button><button id="l-zh" data-l="zh">中文</button>
     </div>
   </header>
+
+  <p class="jqbar" id="jqbar"></p>
 
   <article class="hero">
     <img src="img/1-1.jpg" alt="">
@@ -578,7 +583,9 @@ function openPick(kind,c){
 function closePick(){$("pick").hidden=true;document.body.style.overflow=$("sheet").hidden&&$("order").hidden?"":"hidden"}
 function render(){
   const t=T[L]; document.documentElement.lang=L==="zh"?"zh-CN":L;
-  $("tagline").textContent=BACK?t.hiAgain:t.tagline; $("h-eye").textContent=t.eye; $("h-title").textContent=t.title;
+  $("tagline").textContent=BACK?t.hiAgain:t.tagline;
+  {const q=jieqi();                                   // 报头下面的今日节气，每天自己变
+   $("jqbar").innerHTML=`<b>${esc(t.today)} · <span class="jqz">${esc(q[2])}</span></b> ${esc(q[3])}${L==="zh"?"":" · "+esc(L==="es"?q[4]:q[5])} · ${esc(JQW[q[6]][LI[L]])}`;} $("h-eye").textContent=t.eye; $("h-title").textContent=t.title;
   $("h-desc").textContent=t.desc; $("h-from").textContent=t.frm;
   $("steps").innerHTML=t.steps.map(s=>`<li>${esc(s)}</li>`).join("");
   $("first-t").textContent=t.firstT;
