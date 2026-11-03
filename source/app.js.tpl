@@ -105,6 +105,10 @@ function optByKey(kind,k){
   if(kind==="sd")return sideOpts().find(o=>o.k===k);
   const[dr,dv]=k.split("|");return {k:k,dr:dr,dv:dv||""}}
 function bumpPick(kind,c,k,n){
+  if(c==="*"){const o=kind==="sd"?sideOpts().find(x=>x.k===k):optByKey("dr",k);
+    cartBump(k,n,o.dr?{dr:o.dr,dv:o.dv}:{c:o.c,sz:o.sz});
+    if(!$("pick").hidden)pickCounts(kind,c);
+    return}
   const cur=PICK[c]||(PICK[c]={sd:{},dr:{}});
   const e=cur[kind][k]||(cur[kind][k]={o:optByKey(kind,k),q:0});
   e.q=Math.max(0,Math.min(20,e.q+n));
@@ -112,11 +116,12 @@ function bumpPick(kind,c,k,n){
   if($("detpair"))$("detpair").innerHTML=pairBox(findDish(c));
   if(!$("pick").hidden)pickCounts(kind,c)}
 function pickCounts(kind,c){
-  const cur=(PICK[c]||{})[kind]||{};
+  const toCart=c==="*",cur=toCart?null:((PICK[c]||{})[kind]||{});
   $("pick").querySelectorAll("[data-cq]").forEach(b=>{
-    const parts=b.dataset.cq.split(";"),k=parts[2],e=cur[k];
-    b.setAttribute("aria-pressed",!!e);
-    const s=b.querySelector(".pcount");if(s)s.textContent=e?"×"+e.q:""})}
+    const k=b.dataset.cq.split(";")[2];
+    const q=toCart?(CART[k]?CART[k].q:0):(cur[k]?cur[k].q:0);
+    b.setAttribute("aria-pressed",!!q);
+    const s=b.querySelector(".pcount");if(s)s.textContent=q?"×"+q:""})}
 // 「加小菜 / 加饮料」：全屏列表，点一下加一份，可以连着加
 function openPick(kind,c){
   const ct=CT[L],t=T[L];
@@ -366,7 +371,8 @@ const cTotal=()=>cKeys().reduce((n,k)=>n+CART[k].q*itPrice(k),0);
 const grpOf=it=>it.dr||FRONT.includes(it.c)?"f":"k";
 const zhLines=()=>{const seen={},out=[];
   for(const k of cKeys()){const it=CART[k];
-    const r={n:itName(it,"zh"),q:it.q,o:optTxt(k,"zh").join(" · "),g:grpOf(it)};
+    const r={n:itName(it,"zh"),q:it.q,o:optTxt(k,"zh").join(" · "),g:grpOf(it),
+             n2:itName(it,L),o2:optTxtUI(k,L).join(" · ")};
     const id=r.g+"\u0000"+r.n+"\u0000"+r.o;
     if(seen[id])seen[id].q+=r.q;else out.push(seen[id]=r)}
   return out};
@@ -438,17 +444,18 @@ function addonBlock(){
     if(!drinks.length)drinks=["am","cc"];
     drinks=drinks.slice(0,3).map(dk=>({k:DRKMAP[dk]+"|"+dk,dr:DRKMAP[dk],dv:dk}));
   }
-  if(!sides.length&&!drinks.length)return "";
   const chip=(o,ds)=>`<button class="chip" type="button" data-q="1" data-k="${o.k}" ${ds}>${esc(pickName(o))} +${eur(pickPrice(o),L)}</button>`;
+  const more=(kind,lab)=>`<button class="chip more" type="button" data-more="${kind}|*">${esc(lab)}</button>`;
   return `<div class="addon">
-    ${sides.length?`<b>${esc(ct.addT)}</b><div class="opt">${sides.map(o=>chip(o,`data-c="${o.c}" data-sz="${o.sz||""}"`)).join("")}</div>`:""}
-    ${drinks.length?`<b>${esc(ct.addD)}</b><div class="opt">${drinks.map(o=>chip(o,`data-dr="${o.dr}" data-dv="${o.dv}"`)).join("")}</div>`:""}</div>`;
+    <b>${esc(ct.addT)}</b>
+    <div class="opt">${sides.map(o=>chip(o,`data-c="${o.c}" data-sz="${o.sz||""}"`)).join("")}${more("sd",ct.otherSide)}${drinks.length?"":more("dr",ct.otherDrink)}</div>
+    ${drinks.length?`<b>${esc(ct.addD)}</b><div class="opt">${drinks.map(o=>chip(o,`data-dr="${o.dr}" data-dv="${o.dv}"`)).join("")}${more("dr",ct.otherDrink)}</div>`:""}</div>`;
 }
 function renderOrder(){
   const ct=CT[L],ks=cKeys();
   const rows=ks.map(k=>{const it=CART[k];
     const o=optTxtUI(k,L).join(" · ");
-    const ed=hasOpt(it)?`<button class="on-edit" type="button" data-oedit="${k}" aria-expanded="${!!OEDIT[k]}">${o?esc(o)+" · "+esc(ct.optEdit):esc(ct.optEdit)+(L==="zh"?"：":": ")+esc(L==="zh"?ct.noCo:ct.noCo.toLowerCase())} <span class="ar">${OEDIT[k]?"▾":"›"}</span></button>${OEDIT[k]?`<div class="on-opts">${optUI(k)}${it.q>1?`<button class="chip split" type="button" data-split="${k}">${esc(ct.splitOne)}</button>`:""}</div>`:""}`:(o?`<em class="on-o">${esc(o)}</em>`:"");
+    const ed=hasOpt(it)?`<button class="on-edit" type="button" data-oedit="${k}" aria-expanded="${!!OEDIT[k]}">${o?esc(o)+" · "+esc(ct.optEdit):esc(ct.canNoCo)} <span class="ar">${OEDIT[k]?"▾":"›"}</span></button>${OEDIT[k]?`<div class="on-opts">${optUI(k)}${it.q>1?`<button class="chip split" type="button" data-split="${k}">${esc(ct.splitOne)}</button>`:""}</div>`:""}`:(o?`<em class="on-o">${esc(o)}</em>`:"");
     return `<li><div class="on-r"><div class="on-n">${esc(itName(it,L))}</div>
       ${stepper(k,"",1)}<div class="on-p">${eur(it.q*itPrice(k),L)}</div></div>${ed}</li>`}).join("");
   const zh=zhGroups().map(g=>`<div class="zhg">${g.lab}</div>`+g.rows.map(x=>`<div class="zhrow"><span class="zhn2">${esc(x.n)}${x.o?" · "+x.o:""}</span><span>×${x.q}</span></div>`).join("")).join("");
@@ -475,8 +482,10 @@ function renderOrder(){
     try{navigator.clipboard.writeText(orderText()).then(done,()=>{})}catch(_){}};
 }
 function renderStaff(){
-  $("staff").innerHTML=`<div class="sx"><span>${esc(CT[L].staffNote)}</span><button type="button" id="sclose" aria-label="关闭">×</button></div>
-   ${zhGroups().map(g=>`<h4 class="sg">${g.lab}</h4><ul>${g.rows.map(x=>`<li><span>${esc(x.n)}${x.o?`<em>${x.o}</em>`:""}</span><b>×${x.q}</b></li>`).join("")}</ul>`).join("")}
+  // 中文给店员看，客人自己那门语言放小一号在下面，方便客人指着补充说明
+  const sub=x=>L==="zh"?"":`<i class="sl">${esc(x.n2)}${x.o2?" · "+esc(x.o2):""}</i>`;
+  $("staff").innerHTML=`<div class="sx"><span>${esc(CT.zh.staffNote)}</span><button type="button" id="sclose" aria-label="关闭">×</button></div>
+   ${zhGroups().map(g=>`<h4 class="sg">${g.lab}</h4><ul>${g.rows.map(x=>`<li><span>${esc(x.n)}${x.o?`<em>${x.o}</em>`:""}${sub(x)}</span><b>×${x.q}</b></li>`).join("")}</ul>`).join("")}
    <div class="stot"><span>共 ${cCount()} 份</span><b>${eur(cTotal(),"es")}</b></div>`;
   $("sclose").onclick=closeStaff;
 }

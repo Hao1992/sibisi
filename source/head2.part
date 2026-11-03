@@ -238,6 +238,7 @@ body.detailing .totop,body.ordering .totop{display:none}
 .zhbox{background:var(--chip);border-radius:14px;padding:12px 14px;display:grid;gap:6px;font-family:var(--f-zh)}
 .zhg{margin-top:6px;font-size:11.5px;font-weight:800;letter-spacing:.1em;color:var(--muted)}
 .zhg:first-of-type{margin-top:0}
+.staff .sl{display:block;margin-top:3px;font-family:var(--f-body);font-style:normal;font-size:15px;font-weight:600;line-height:1.3;color:#6a635a}
 .staff .sg{margin:14px 0 2px;font-size:15px;font-weight:800;letter-spacing:.1em;opacity:.55}
 .staff .sg:first-of-type{margin-top:0}
 .zhbox dt{font-size:12px;font-weight:800;letter-spacing:.08em;color:var(--red);font-family:var(--f-body)}
