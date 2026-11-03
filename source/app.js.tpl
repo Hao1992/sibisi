@@ -18,6 +18,9 @@ const UPSELL=__UPSELL__;
 const TEL=__TEL__;
 const MAP=__MAP__;
 const REV=__REV__;
+const TOP=__TOP__;
+const FRONT=__FRONT__;
+const GRP=__GRP__;
 const POT=c=>c.slice(0,2)==="1-";
 const LI={zh:0,es:1,en:2};
 const eur=(n,l)=>l==="en"?"€"+n.toFixed(2):n.toFixed(2).replace(".",",")+" €";
@@ -159,6 +162,7 @@ function render(){
       const desc=L==="en"?d.en2:L==="es"?d.es2:"";
       const f=(d.fl||"").split(" ");
       let tags="";
+      if(TOP.includes(d.c))tags+=`<span class="tag top">★ ${t.top}</span>`;
       if(f.includes("vg"))tags+=`<span class="tag veg">${t.vegan}</span>`;
       else if(f.includes("v"))tags+=`<span class="tag veg">${t.veg}</span>`;
       const taste=d.ta.map(k=>{const hot=k==="picante"||k==="mala";return `<span class="tt${hot?" hotx":""}">${hot?"🌶 ":""}${esc(nm(TASTE[k]))}</span>`}).join("");
@@ -305,8 +309,12 @@ function itName(it,l){
 const cKeys=()=>Object.keys(CART);
 const cCount=()=>cKeys().reduce((n,k)=>n+CART[k].q,0);
 const cTotal=()=>cKeys().reduce((n,k)=>n+CART[k].q*itPrice(CART[k]),0);
+const grpOf=it=>it.dr||FRONT.includes(it.c)?"f":"k";
 const zhLines=()=>cKeys().map(k=>{const it=CART[k];
-  return {n:itName(it,"zh"),q:it.q,o:optTxt(it,"zh").join(" · ")}});
+  return {n:itName(it,"zh"),q:it.q,o:optTxt(it,"zh").join(" · "),g:grpOf(it)}});
+// 按出餐分组，空的那组不出现
+const zhGroups=()=>{const ls=zhLines();
+  return ["k","f"].map(g=>({g:g,lab:GRP[g],rows:ls.filter(x=>x.g===g)})).filter(x=>x.rows.length)};
 function cartBump(k,n,ds){
   let it=CART[k];
   if(!it){if(n<0)return;
@@ -383,7 +391,7 @@ function renderOrder(){
     const o=optTxt(it,L).join(" · ");
     return `<li><div class="on-n">${esc(itName(it,L))}${o?`<em class="on-o">${esc(o)}</em>`:""}</div>
       ${stepper(k)}<div class="on-p">${eur(it.q*itPrice(it),L)}</div></li>`}).join("");
-  const zh=zhLines().map(x=>`<div class="zhrow"><span class="zhn2">${esc(x.n)}${x.o?" · "+x.o:""}</span><span>×${x.q}</span></div>`).join("");
+  const zh=zhGroups().map(g=>`<div class="zhg">${g.lab}</div>`+g.rows.map(x=>`<div class="zhrow"><span class="zhn2">${esc(x.n)}${x.o?" · "+x.o:""}</span><span>×${x.q}</span></div>`).join("")).join("");
   $("order").innerHTML=`<div class="in">
     <div class="orow"><h3>${esc(ct.title)}</h3><button class="xbtn" type="button" id="oclose" aria-label="${esc(ct.back)}">×</button></div>
     ${ks.length?`<div class="warn">${esc(ct.notOrder)}</div>
@@ -408,11 +416,12 @@ function renderOrder(){
 }
 function renderStaff(){
   $("staff").innerHTML=`<div class="sx"><span>${esc(CT[L].staffNote)}</span><button type="button" id="sclose" aria-label="关闭">×</button></div>
-   <ul>${zhLines().map(x=>`<li><span>${esc(x.n)}${x.o?`<em>${x.o}</em>`:""}</span><b>×${x.q}</b></li>`).join("")}</ul>
+   ${zhGroups().map(g=>`<h4 class="sg">${g.lab}</h4><ul>${g.rows.map(x=>`<li><span>${esc(x.n)}${x.o?`<em>${x.o}</em>`:""}</span><b>×${x.q}</b></li>`).join("")}</ul>`).join("")}
    <div class="stot"><span>共 ${cCount()} 份</span><b>${eur(cTotal(),"es")}</b></div>`;
   $("sclose").onclick=closeStaff;
 }
-const orderText=()=>["Sibisi Ramen"].concat(zhLines().map(x=>`${x.n}${x.o?"（"+x.o+"）":""} ×${x.q}`),
+const orderText=()=>["Sibisi Ramen"].concat(
+  ...zhGroups().map(g=>["【"+g.lab+"】"].concat(g.rows.map(x=>`${x.n}${x.o?"（"+x.o+"）":""} ×${x.q}`))),
   [`共 ${cCount()} 份　${eur(cTotal(),"es")}`]).join("\n");
 function openOrder(){renderOrder();$("order").hidden=false;$("scrim").hidden=false;
   document.body.classList.add("ordering");document.body.style.overflow="hidden"}

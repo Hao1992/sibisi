@@ -15,7 +15,7 @@ T = {
   more="查看详细介绍 ›", pairWith="可另点（另收费）：", orw="或", pairT="推荐加点（另收费，不含在主食里）", total="加点后合计", soupTotal="面 + 小菜合计",
   coldQ="想喝点冰的？", pairNote="以上小菜和饮料不含在主食价格里，需要另外点、另外付费。想加的话，点单时告诉店员菜号就行。", illo="示意图 · 实拍照片待补", close="关闭",
   dirs="怎么走 ›", rev="在 Google 上给我们评价 ›", call="拨打",
-  fT="挑菜", fNo="不辣", fWo="不含%s", fCount="%s 道菜", fClear="清除", fEmpty="没有同时满足这些条件的菜。少选一个条件试试，或者直接问店员。",
+  top="最多人点", fT="挑菜", fNo="不辣", fWo="不含%s", fCount="%s 道菜", fClear="清除", fEmpty="没有同时满足这些条件的菜。少选一个条件试试，或者直接问店员。",
   adj="辣度：不辣、微辣、中辣、特辣（默认不辣）。加配菜另收费：土豆 +1,00 €，油菜 +1,20 €，白蘑菇 +1,60 €，金针菇 +1,60 €，米饭 +1,70 €。加辣用的辣椒油含芝麻。",
   pot="砂锅端上桌时还在咕嘟冒泡，这是黄焖锅最好吃的时刻。小心别碰锅边。先吃配菜，再把汤汁浇在米饭上拌着吃。"),
  "es": dict(tagline="Cocina china casera · 中餐", eye="Nuestro plato estrella", title="Estofado de pollo Huangmen",
@@ -31,7 +31,7 @@ T = {
   more="Ver detalles ›", pairWith="Para añadir (se paga aparte):", orw="o", pairT="Sugerencia para añadir (se paga aparte, no incluido)", total="Total si lo añades", soupTotal="Total fideos + entrante",
   coldQ="¿Algo fresquito para beber?", pairNote="El entrante y la bebida no están incluidos en el precio del plato: se piden y se pagan aparte. Si los quieres, dile los números al personal.", illo="Ilustración · foto real próximamente", close="Cerrar",
   dirs="Cómo llegar ›", rev="Déjanos una reseña en Google ›", call="Llamar",
-  fT="Filtrar", fNo="Sin picante", fWo="Sin %s", fCount="%s platos", fClear="Quitar", fEmpty="No hay platos que cumplan todo esto. Prueba con un filtro menos, o pregúntanos.",
+  top="Los más pedidos", fT="Filtrar", fNo="Sin picante", fWo="Sin %s", fCount="%s platos", fClear="Quitar", fEmpty="No hay platos que cumplan todo esto. Prueba con un filtro menos, o pregúntanos.",
   adj="Nivel de picante: sin picante, suave, medio o muy picante (por defecto, sin picante). Extras con suplemento: patata +1,00 €, pak choi +1,20 €, champiñón +1,60 €, setas enoki +1,60 €, arroz +1,70 €. El aceite de chile que usamos para el picante lleva sésamo.",
   pot="La olla llega a la mesa todavía hirviendo: ese es el mejor momento. Cuidado, el borde quema. Empieza por los ingredientes y después echa la salsa sobre el arroz."),
  "en": dict(tagline="Home-style Chinese food · 中餐", eye="Our signature dish", title="Huangmen braised chicken pot",
@@ -47,7 +47,7 @@ T = {
   more="See details ›", pairWith="Optional add-ons (extra charge):", orw="or", pairT="Suggested add-ons (extra charge, not included)", total="Total with add-ons", soupTotal="Noodles + side total",
   coldQ="Fancy a cold drink?", pairNote="Sides and drinks are not included in the dish price: they are ordered and paid separately. To add them, just tell our staff the numbers.", illo="Illustration · real photo coming soon", close="Close",
   dirs="Get directions ›", rev="Leave us a Google review ›", call="Call",
-  fT="Filter", fNo="Not spicy", fWo="No %s", fCount="%s dishes", fClear="Clear", fEmpty="No dishes match all of these. Try one filter fewer, or just ask us.",
+  top="Most ordered", fT="Filter", fNo="Not spicy", fWo="No %s", fCount="%s dishes", fClear="Clear", fEmpty="No dishes match all of these. Try one filter fewer, or just ask us.",
   adj="Spice: none, mild, medium or extra hot (no spice by default). Extras at extra cost: potato +€1.00, pak choi +€1.20, button mushrooms +€1.60, enoki +€1.60, rice +€1.70. The chilli oil we use for spice contains sesame.",
   pot="The pot arrives still bubbling, which is the best moment to eat it. Careful, the rim is hot. Eat the toppings first, then spoon the sauce over your rice."),
 }
@@ -229,3 +229,10 @@ REV = "https://www.google.com/search?q=Sibisi+restaurant+ramen+Valencia#lrd=0xd6
 
 # 结算前的加点推荐：出餐快、毛利高。凉拌黄瓜现做费时，不放进来。
 UPSELL = ["6-5|s", "2-11", "6-4", "6-1"]
+
+# 店主说最多人点的三道（2026-11-03）
+TOP = ["1-1", "2-3", "5-1"]
+
+# 给店员的单子按出餐分组：凉菜和酒水前台出，其余（锅、面、炒饭）厨房做
+FRONT = ["6-1", "6-2", "6-4", "6-5"]
+GRP = {"k": "厨房", "f": "前台"}
