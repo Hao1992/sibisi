@@ -204,19 +204,19 @@ SP = [["不辣", "Sin picante", "None"], ["微辣", "Suave", "Mild"],
 
 # 购物车界面文字。中文块（给店员看的那部分）不走这里，固定中文写在 app.js.tpl 里。
 CT = {
- "zh": dict(optEdit="改", addT="还要加点什么吗？", addD="来杯喝的？", sideL="小菜", otherSide="＋ 加小菜", pickDone="完成", otherDrink="＋ 加饮料", pickSide="加小菜", pickDrink="加饮料", pickNone="不要", drinkPick="饮料", noDrink="不要饮料", combo="这一套都加上", extras="加配菜", noCo="不要香菜", pick="加入我的单子", view="查看我的单子", title="我的单子", items="%s 份", total="合计",
+ "zh": dict(optEdit="改", splitOne="只改其中 1 份", toTop="回到顶部", addT="还要加点什么吗？", addD="来杯喝的？", sideL="小菜", otherSide="＋ 加小菜", pickDone="完成", otherDrink="＋ 加饮料", pickSide="加小菜", pickDrink="加饮料", pickNone="不要", drinkPick="饮料", noDrink="不要饮料", combo="这一套都加上", extras="加配菜", noCo="不要香菜", pick="加入我的单子", view="查看我的单子", title="我的单子", items="%s 份", total="合计",
    spice="辣度", staff="给店员看 ›", copy="复制", copied="已复制", clear="清空", back="继续点菜",
    empty="还没有选菜。在菜单上点 ＋ 就可以加进来。",
    notOrder="这是一份清单，还没有下单。选好后把手机给店员看就行。",
    priceNote="价格仅供参考，最终以店员确认为准。",
    staffNote="客人自己选的，还没下单"),
- "es": dict(optEdit="Cambiar", addT="¿Añades algo más?", addD="¿Algo para beber?", sideL="Entrante", otherSide="+ Entrante", pickDone="Hecho", otherDrink="+ Bebida", pickSide="Añadir entrante", pickDrink="Añadir bebida", pickNone="Ninguno", drinkPick="Bebida", noDrink="Sin bebida", combo="Añadir el combo", extras="Extras", noCo="Sin cilantro", pick="Añadir a mi pedido", view="Ver mi pedido", title="Mi pedido", items="%s platos", total="Total",
+ "es": dict(optEdit="Cambiar", splitOne="Cambiar solo 1", toTop="Volver arriba", addT="¿Añades algo más?", addD="¿Algo para beber?", sideL="Entrante", otherSide="+ Entrante", pickDone="Hecho", otherDrink="+ Bebida", pickSide="Añadir entrante", pickDrink="Añadir bebida", pickNone="Ninguno", drinkPick="Bebida", noDrink="Sin bebida", combo="Añadir el combo", extras="Extras", noCo="Sin cilantro", pick="Añadir a mi pedido", view="Ver mi pedido", title="Mi pedido", items="%s platos", total="Total",
    spice="Picante", staff="Enseñar al personal ›", copy="Copiar", copied="Copiado", clear="Vaciar", back="Seguir pidiendo",
    empty="Aún no has elegido nada. Pulsa ＋ en cualquier plato para añadirlo.",
    notOrder="Esto es solo una lista: el pedido todavía no está hecho. Cuando lo tengas, enséñaselo al personal.",
    priceNote="Precios orientativos; el personal confirma el total.",
    staffNote="Lista hecha por el cliente, aún sin pedir"),
- "en": dict(optEdit="Change", addT="Anything else?", addD="Something to drink?", sideL="Side", otherSide="+ Side", pickDone="Done", otherDrink="+ Drink", pickSide="Add a side", pickDrink="Add a drink", pickNone="None", drinkPick="Drink", noDrink="No drink", combo="Add this combo", extras="Extras", noCo="No coriander", pick="Add to my order", view="View my order", title="My order", items="%s items", total="Total",
+ "en": dict(optEdit="Change", splitOne="Change just 1", toTop="Back to top", addT="Anything else?", addD="Something to drink?", sideL="Side", otherSide="+ Side", pickDone="Done", otherDrink="+ Drink", pickSide="Add a side", pickDrink="Add a drink", pickNone="None", drinkPick="Drink", noDrink="No drink", combo="Add this combo", extras="Extras", noCo="No coriander", pick="Add to my order", view="View my order", title="My order", items="%s items", total="Total",
    spice="Spice", staff="Show to staff ›", copy="Copy", copied="Copied", clear="Clear", back="Keep choosing",
    empty="Nothing chosen yet. Tap ＋ on any dish to add it.",
    notOrder="This is just a list — nothing has been ordered yet. When you're ready, show it to our staff.",
@@ -236,8 +236,9 @@ UPSELL = ["6-5|s", "2-11", "6-4", "6-1"]
 # 店主说最多人点的三道（2026-11-03）
 TOP = ["1-1", "2-3", "5-1"]
 
-# 给店员的单子按出餐分组：凉菜和酒水前台出，其余（锅、面、炒饭）厨房做
-FRONT = ["6-1", "6-2", "6-4", "6-5"]
+# 给店员的单子按出餐分组：辣白菜、海藻和酒水前台出，其余（锅、面、炒饭、
+# 五香牛肉、凉拌黄瓜）厨房做
+FRONT = ["6-4", "6-5"]
 GRP = {"k": "厨房", "f": "前台"}
 
 # 多人组合：固定搭配，一键加全，价格按菜单价现算，不另打折。

@@ -222,6 +222,10 @@ body.ordering .cartbar{display:none}
 .on-edit[aria-expanded="true"]{border-color:var(--red);color:var(--red)}
 .on-edit .ar{color:var(--muted);font-weight:800}
 .on-opts{display:grid;gap:7px}
+.chip.split{justify-self:start;border-style:dashed;border-color:var(--red);color:var(--red);font-size:12.5px;padding:7px 12px}
+.totop{position:fixed;right:14px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:6;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:800 20px var(--f-body);line-height:1;cursor:pointer;box-shadow:0 3px 14px rgba(0,0,0,.28);display:grid;place-items:center;padding:0}
+body.hascart .totop{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+body.detailing .totop,body.ordering .totop{display:none}
 .on-n{font-weight:700;line-height:1.3;min-width:0}
 .on-o{display:block;font-size:12px;font-weight:700;color:var(--red)}
 .on-p{font-weight:800;font-variant-numeric:tabular-nums;min-width:62px;text-align:right}
@@ -308,6 +312,7 @@ body.ordering .cartbar{display:none}
   <div class="sheet order" id="order" role="dialog" aria-modal="true" hidden></div>
   <div class="staff" id="staff" role="dialog" aria-modal="true" hidden></div>
   <div class="pick" id="pick" role="dialog" aria-modal="true" hidden></div>
+  <button class="totop" id="totop" type="button" hidden>↑</button>
   <div class="cartbar" id="cartbar" hidden>
     <div class="cb-l"><b id="cb-n"></b><span class="cb-t" id="cb-t"></span></div>
     <button class="cb-go" id="cb-go"></button>
