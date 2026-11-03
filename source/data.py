@@ -120,6 +120,9 @@ S = [
      d("7-1","酱油炒饭","Arroz frito con salsa de soja","Soy sauce fried rice",7,"Arroz salteado con huevo y cebolla.","Rice wok-fried with egg and onion.","G H S",["soja"],"v",img="7-1")]),
 ]
 
+CORI = [x["c"] for sec in S if sec["id"] in ("sopa", "frito", "insta", "mix")
+                 for x in sec["d"] if x["c"] != "2-11"]
+
 FIRST = [dict(c="1-1", zh="招牌黄焖鸡，不辣", es="Nuestro plato estrella, sin picante", en="Our signature, not spicy"),
          dict(c="1-6", zh="想多吃蔬菜（肉汤底）", es="Si te apetece verdura (caldo de carne)", en="If you fancy vegetables (meat broth)"),
          dict(c="5-5", zh="喜欢辣", es="Si te gusta el picante", en="If you like heat")]
@@ -184,8 +187,8 @@ PR = {
 
 # --- 点单（购物车）---------------------------------------------------------
 # 辣度（只用于黄焖锅 1-x），顺序即菜单上的顺序，默认第一个
-# 带香菜、可以要求不放的菜（2-4 / 3-4 / 4-2 写在详情里，2-1 / 2-8 / 2-9 照片里有）
-CORI = ["2-1", "2-4", "2-8", "2-9", "3-4", "4-2"]
+# 可以要求不放香菜的菜：所有面（汤面 / 炒面 / 炒方便面 / 拌面），2-11 水煮蛋除外。
+# 放在 S 定义之后计算，加新面时自动包含。
 
 SP = [["不辣", "Sin picante", "None"], ["微辣", "Suave", "Mild"],
       ["中辣", "Medio", "Medium"], ["特辣", "Muy picante", "Extra hot"]]
