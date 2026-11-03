@@ -143,6 +143,11 @@ DRK = {"ts": [["青岛啤酒", "Tsingtao", "Tsingtao"], 2.5], "am": [["Amstel", 
        "gt": [["绿茶", "Té verde", "Green tea"], 2.5], "ne": [["Nestea 冰红茶", "Nestea", "Nestea"], 2.2],
        "aq": [["Aquarius 柠檬味", "Aquarius limón", "Aquarius lemon"], 2.2]}
 
+# 推荐加点里的饮料 -> 酒水单上的那一行（点推荐时加进单子的就是这一行）
+DRKMAP = {"ts": "dr-beers-3", "am": "dr-beers-0", "hk": "dr-beers-2", "ag": "dr-beers-4",
+          "rd": "dr-beers-1", "cc": "dr-soft-0", "ccz": "dr-soft-0", "fa": "dr-soft-1",
+          "wl": "dr-soft-6", "gt": "dr-soft-4", "ne": "dr-soft-2", "aq": "dr-soft-3"}
+
 # code: side, [beer, soft], soup-mode, reasons zh/es/en
 PR = {
  "1-1": ["6-5s", ["ts", "ccz"], 0, "招牌黄焖鸡，配一碟酸辣的辣白菜解腻，再来一瓶冰啤酒或一罐零度可乐。", "Nuestro plato estrella con un poco de kimchi para equilibrar, y una cerveza fría o una Coca-Cola Zero.", "Our signature pot with a little kimchi to cut the richness, plus a cold beer or a Coke Zero."],
@@ -187,19 +192,19 @@ SP = [["不辣", "Sin picante", "None"], ["微辣", "Suave", "Mild"],
 
 # 购物车界面文字。中文块（给店员看的那部分）不走这里，固定中文写在 app.js.tpl 里。
 CT = {
- "zh": dict(extras="加配菜", noCo="不要香菜", pick="加入我的单子", view="查看我的单子", title="我的单子", items="%s 份", total="合计",
+ "zh": dict(combo="这一套都加上", extras="加配菜", noCo="不要香菜", pick="加入我的单子", view="查看我的单子", title="我的单子", items="%s 份", total="合计",
    spice="辣度", staff="给店员看 ›", copy="复制", copied="已复制", clear="清空", back="继续点菜",
    empty="还没有选菜。在菜单上点 ＋ 就可以加进来。",
    notOrder="这是一份清单，还没有下单。选好后把手机给店员看就行。",
    priceNote="价格仅供参考，最终以店员确认为准。",
    staffNote="客人自己选的，还没下单"),
- "es": dict(extras="Extras", noCo="Sin cilantro", pick="Añadir a mi pedido", view="Ver mi pedido", title="Mi pedido", items="%s platos", total="Total",
+ "es": dict(combo="Añadir el combo", extras="Extras", noCo="Sin cilantro", pick="Añadir a mi pedido", view="Ver mi pedido", title="Mi pedido", items="%s platos", total="Total",
    spice="Picante", staff="Enseñar al personal ›", copy="Copiar", copied="Copiado", clear="Vaciar", back="Seguir pidiendo",
    empty="Aún no has elegido nada. Pulsa ＋ en cualquier plato para añadirlo.",
    notOrder="Esto es solo una lista: el pedido todavía no está hecho. Cuando lo tengas, enséñaselo al personal.",
    priceNote="Precios orientativos; el personal confirma el total.",
    staffNote="Lista hecha por el cliente, aún sin pedir"),
- "en": dict(extras="Extras", noCo="No coriander", pick="Add to my order", view="View my order", title="My order", items="%s items", total="Total",
+ "en": dict(combo="Add this combo", extras="Extras", noCo="No coriander", pick="Add to my order", view="View my order", title="My order", items="%s items", total="Total",
    spice="Spice", staff="Show to staff ›", copy="Copy", copied="Copied", clear="Clear", back="Keep choosing",
    empty="Nothing chosen yet. Tap ＋ on any dish to add it.",
    notOrder="This is just a list — nothing has been ordered yet. When you're ready, show it to our staff.",

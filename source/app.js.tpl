@@ -13,6 +13,7 @@ const DET=__DET__;
 const CT=__CT__;
 const SP=__SP__;
 const CORI=__CORI__;
+const DRKMAP=__DRKMAP__;
 const POT=c=>c.slice(0,2)==="1-";
 const LI={zh:0,es:1,en:2};
 const eur=(n,l)=>l==="en"?"€"+n.toFixed(2):n.toFixed(2).replace(".",",")+" €";
@@ -36,15 +37,20 @@ function findDish(c){let r=null;S.forEach(s=>s.d.forEach(x=>{if(x.c===c)r=x}));r
 function pairLine(d){const p=PR[d.c];if(!p)return "";const t=T[L];const sd=SIDE[p[0]];const d1=DRK[p[1][0]],d2=DRK[p[1][1]];
  const lo=Math.min(d1[1],d2[1]),hi=Math.max(d1[1],d2[1]);const pr=lo===hi?eur(lo,L):eur(lo,L)+"–"+eur(hi,L);
  return `<div class="pairl"><b>${t.pairWith}</b> ${esc(nm(sd[0]))} <span class="plus">+${eur(sd[1],L)}</span>${p[2]?"":` · ${esc(nm(d1[0]))} ${t.orw} ${esc(nm(d2[0]))} <span class="plus">+${pr}</span>`}</div>`}
-function pairBox(d){const p=PR[d.c];if(!p)return "";const t=T[L];const sd=SIDE[p[0]];const d1=DRK[p[1][0]],d2=DRK[p[1][1]];
+function pairBox(d){const p=PR[d.c];if(!p)return "";const t=T[L],ct=CT[L];const sd=SIDE[p[0]];const d1=DRK[p[1][0]],d2=DRK[p[1][1]];
  const lo=Math.min(d1[1],d2[1]),hi=Math.max(d1[1],d2[1]);const pr=lo===hi?eur(lo,L):eur(lo,L)+"–"+eur(hi,L);
  const base=d.p+sd[1];const soup=p[2];const tot=soup?eur(base,L):(lo===hi?eur(base+lo,L):eur(base+lo,L)+"–"+eur(base+hi,L));
  const dn=`${esc(nm(d1[0]))} ${t.orw} ${esc(nm(d2[0]))}`;const why=p[3+LI[L]];
+ const sc=p[0].replace("s",""),ss=p[0].endsWith("s")?"s":"";          // 小菜：菜号 + 是否小份
+ const sk=ss?sc+"|"+ss:sc;
+ const k1=DRKMAP[p[1][0]],k2=DRKMAP[p[1][1]];
+ const drow=(k,x)=>`<li><span>+ ${esc(nm(x[0]))}</span><span>+${eur(x[1],L)}</span>${stepper(k,`data-dr="${k}"`)}</li>`;
  return `<div class="pair"><dt>${t.pairT}</dt><p>${esc(why)}</p><ul>
-  <li><span>${d.c} ${esc(L==="zh"?d.zh:d[L])}</span><span>${eur(d.p,L)}</span></li>
-  <li><span>+ ${p[0].replace("s","")} ${esc(nm(sd[0]))}</span><span>+${eur(sd[1],L)}</span></li>
-  ${soup?"":`<li><span>+ ${dn}</span><span>+${pr}</span></li>`}
+  <li><span>${d.c} ${esc(L==="zh"?d.zh:d[L])}</span><span>${eur(d.p,L)}</span>${stepper(d.c,`data-c="${d.c}"`)}</li>
+  <li><span>+ ${sc} ${esc(nm(sd[0]))}</span><span>+${eur(sd[1],L)}</span>${stepper(sk,`data-c="${sc}" data-sz="${ss}"`)}</li>
+  ${soup?"":drow(k1,d1)+drow(k2,d2)}
   <li class="tot"><span>${soup?t.soupTotal:t.total}</span><span>${tot}</span></li></ul>
+  <button class="obtn combo" type="button" data-combo="${d.c};${sk};${soup?"":k1}">${esc(ct.combo)}</button>
   ${soup?`<small>${t.coldQ} ${dn}, ${pr}.</small>`:""}<small>${t.pairNote}</small></div>`}
 function render(){
   const t=T[L]; document.documentElement.lang=L==="zh"?"zh-CN":L;
@@ -112,6 +118,13 @@ function closeDet(){DETC=null;$("sheet").hidden=true;$("scrim").hidden=true;docu
 document.addEventListener("click",e=>{
   const q=e.target.closest("[data-q]");
   if(q){e.preventDefault();cartBump(q.dataset.k,+q.dataset.q,q.dataset);return}
+  const cb=e.target.closest("[data-combo]");
+  if(cb){e.preventDefault();
+    const[dc,sk,dk]=cb.dataset.combo.split(";");
+    cartBump(dc,1,{c:dc});
+    cartBump(sk,1,{c:sk.split("|")[0],sz:sk.split("|")[1]||""});
+    if(dk)cartBump(dk,1,{dr:dk});
+    return}
   const op=e.target.closest("[data-opt]");
   if(op){e.preventDefault();const[kind,c,i]=op.dataset.opt.split("|");setOpt(kind,c,+i);return}
   const r=e.target.closest("[data-det]");if(r)openDet(r.dataset.det);
