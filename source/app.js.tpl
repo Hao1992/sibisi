@@ -21,6 +21,7 @@ const REV=__REV__;
 const TOP=__TOP__;
 const FRONT=__FRONT__;
 const GRP=__GRP__;
+const COMBO=__COMBO__;
 const POT=c=>c.slice(0,2)==="1-";
 const LI={zh:0,es:1,en:2};
 const eur=(n,l)=>l==="en"?"€"+n.toFixed(2):n.toFixed(2).replace(".",",")+" €";
@@ -142,6 +143,7 @@ function render(){
       <div class="ft"><h4>${esc(L==="zh"?d.zh:d[L])}</h4><em>${esc(f[L])}</em></div>
       <div class="fr"><b>${eur(d.p,L)}</b>${stepper(d.c,`data-c="${d.c}"`)}</div></li>`}).join("");
   $("herobuy").innerHTML=`<span class="qlab">1-1 ${esc(L==="zh"?findDish("1-1").zh:findDish("1-1")[L])}</span>${stepper("1-1",'data-c="1-1"')}`;
+  renderPacks();
   $("promise").innerHTML=`<b>${esc(t.promiseT)}</b><ul>${t.promise.map(([ic,x])=>`<li><span>${ic}</span>${esc(x)}</li>`).join("")}</ul>`;
   $("f-take").textContent=t.take; $("copy").textContent=t.copy;
   $("phone").href="tel:"+TEL;
@@ -171,10 +173,9 @@ function render(){
         ?`<div class="qty2"><span class="qlab">${SZ[L].s}</span>${stepper(d.c+"|s",`data-c="${d.c}" data-sz="s"`)}</div>
            <div class="qty2"><span class="qlab">${SZ[L].l}</span>${stepper(d.c+"|l",`data-c="${d.c}" data-sz="l"`)}</div>`
         :stepper(d.c,`data-c="${d.c}"`);
-      const spice=optUI(d.c);
       const price=d.p2?`<span class="pz">${L==="zh"?"小":L==="en"?"S":"P"}</span> ${eur(d.p,L)}<br><span class="pz">${L==="zh"?"大":L==="en"?"L":"G"}</span> ${eur(d.p2,L)}`:eur(d.p,L);
       h+=`<div class="dish" id="d-${d.c}"${det}><div class="thumb">${d.img?`<img src="img/${d.img}.jpg" alt="" loading="lazy">`:illo(d.c,"")}<span class="badge">${d.c}</span></div>
-        <div class="t"><h4>${esc(name)}</h4><div class="zhn">${esc(sub)}</div>${desc?`<p>${esc(desc)}</p>`:""}${taste?`<div class="taste">${taste}</div>`:""}${tags?`<div class="tags">${tags}</div>`:""}${algRow(d.al,true)}${pairLine(d)}${DET[d.c]?`<span class="more">${t.more}</span>`:""}${spice}<div class="qwrap">${qty}</div></div>
+        <div class="t"><h4>${esc(name)}</h4><div class="zhn">${esc(sub)}</div>${desc?`<p>${esc(desc)}</p>`:""}${taste?`<div class="taste">${taste}</div>`:""}${tags?`<div class="tags">${tags}</div>`:""}${algRow(d.al,true)}${pairLine(d)}${DET[d.c]?`<span class="more">${t.more}</span>`:""}<div class="qwrap">${qty}</div></div>
         <div class="price">${price}</div></div>`;
     }
     h+=`</div>`;
@@ -187,6 +188,23 @@ function render(){
   $("menu").innerHTML=h;
   syncCart();
   spy();
+}
+/* ---------- 多人组合：固定搭配，一个按钮加全 ---------- */
+const packOpt=k=>k.indexOf("dr-")===0
+  ?{k:k,dr:k.split("|")[0],dv:k.split("|")[1]||""}
+  :{k:k,c:k.split("|")[0],sz:k.split("|")[1]||""};
+const packTotal=p=>p.items.reduce((n,[k,q])=>n+q*pickPrice(packOpt(k)),0);
+function renderPacks(){
+  const t=T[L];
+  $("packs").innerHTML=`<b>${esc(t.packT)}</b>`+COMBO.map(p=>{
+    const tot=packTotal(p);
+    return `<div class="pk"><div class="pkh"><b>${esc(p[L])}</b></div>
+      <p>${esc(p[L+"2"])}</p>
+      <ul>${p.items.map(([k,q])=>{const o=packOpt(k);
+        return `<li><span>${esc(pickName(o))}</span><span>×${q}</span></li>`}).join("")}</ul>
+      <div class="pkf"><div class="pkp"><b>${eur(tot,L)}</b><em>${esc(t.packEach.replace("%s",eur(tot/p.n,L)))}</em></div>
+        <button class="obtn" type="button" data-pack="${p.id}">${esc(t.packAdd)}</button></div></div>`}).join("")
+    +`<small>${esc(t.packNote)}</small>`;
 }
 function openDet(c){
   const d=findDish(c);if(!d||!DET[c])return;const t=T[L],lb=LBL[L],x=DET[c][L];
@@ -224,6 +242,13 @@ document.addEventListener("click",e=>{
     render();
     if(FIL.length)$("filters").scrollIntoView({block:"start",behavior:"smooth"});
     return}
+  const pk=e.target.closest("[data-pack]");
+  if(pk){e.preventDefault();const p=COMBO.find(x=>x.id===pk.dataset.pack),f=flyFrom(pk);
+    for(const[k,q]of p.items){const o=packOpt(k);
+      cartBump(k,q,o.dr?{dr:o.dr,dv:o.dv}:{c:o.c,sz:o.sz})}
+    flyToCart(f);return}
+  const oe=e.target.closest("[data-oedit]");
+  if(oe){e.preventDefault();const c=oe.dataset.oedit;OEDIT[c]=!OEDIT[c];renderOrder();return}
   const mo=e.target.closest("[data-more]");
   if(mo){e.preventDefault();const[kind,c]=mo.dataset.more.split("|");openPick(kind,c);return}
   const cq=e.target.closest("[data-cq]");
@@ -286,6 +311,16 @@ function optTxt(it,l){
   if(o.nc)out.push(CT[l].noCo);
   exList(it.c).forEach(i=>out.push("+"+EXTRAS[i][0][LI[l]]));
   return out}
+// 客人看的那一份：辣度带上「辣度：」，免得英文里只剩一个 None
+function optTxtUI(it,l){
+  if(it.dr||it.sz)return [];
+  const o=OPT[it.c]||{},out=[],lc=x=>l==="zh"?x:x.toLowerCase();
+  if(POT(it.c))out.push(CT[l].spice+(l==="zh"?"：":": ")+lc(SP[o.sp||0][LI[l]]));
+  if(o.nc)out.push(CT[l].noCo);
+  exList(it.c).forEach(i=>out.push("+"+EXTRAS[i][0][LI[l]]));
+  return out}
+const hasOpt=it=>!it.dr&&!it.sz&&(POT(it.c)||CORI.includes(it.c));
+let OEDIT={};
 const chipBtn=(d,label,on)=>`<button class="chip" type="button" data-opt="${d}" aria-pressed="${on}">${esc(label)}</button>`;
 function optUI(c){
   const o=OPT[c]||{},ct=CT[L],out=[];
@@ -388,9 +423,10 @@ function addonBlock(){
 function renderOrder(){
   const ct=CT[L],ks=cKeys();
   const rows=ks.map(k=>{const it=CART[k];
-    const o=optTxt(it,L).join(" · ");
-    return `<li><div class="on-n">${esc(itName(it,L))}${o?`<em class="on-o">${esc(o)}</em>`:""}</div>
-      ${stepper(k)}<div class="on-p">${eur(it.q*itPrice(it),L)}</div></li>`}).join("");
+    const o=optTxtUI(it,L).join(" · ");
+    const ed=hasOpt(it)?`<button class="on-edit" type="button" data-oedit="${it.c}" aria-expanded="${!!OEDIT[it.c]}">${o?esc(o)+" · "+esc(ct.optEdit):esc(ct.optEdit)+(L==="zh"?"：":": ")+esc(L==="zh"?ct.noCo:ct.noCo.toLowerCase())} <span class="ar">${OEDIT[it.c]?"▾":"›"}</span></button>${OEDIT[it.c]?`<div class="on-opts">${optUI(it.c)}</div>`:""}`:(o?`<em class="on-o">${esc(o)}</em>`:"");
+    return `<li><div class="on-r"><div class="on-n">${esc(itName(it,L))}</div>
+      ${stepper(k)}<div class="on-p">${eur(it.q*itPrice(it),L)}</div></div>${ed}</li>`}).join("");
   const zh=zhGroups().map(g=>`<div class="zhg">${g.lab}</div>`+g.rows.map(x=>`<div class="zhrow"><span class="zhn2">${esc(x.n)}${x.o?" · "+x.o:""}</span><span>×${x.q}</span></div>`).join("")).join("");
   $("order").innerHTML=`<div class="in">
     <div class="orow"><h3>${esc(ct.title)}</h3><button class="xbtn" type="button" id="oclose" aria-label="${esc(ct.back)}">×</button></div>
