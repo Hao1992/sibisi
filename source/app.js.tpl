@@ -54,50 +54,58 @@ const pickName=o=>o.dr?(o.dv?DRK[o.dv][0][LI[L]]:drName(DRINK[o.dr],L)):sideName
 const pickPrice=o=>o.p!=null?o.p:(o.dr?(o.dv?DRK[o.dv][1]:DRINK[o.dr][1]):(o.sz==="l"?findDish(o.c).p2:findDish(o.c).p));
 function pairBox(d){
   const p=PR[d.c];if(!p)return "";
-  const t=T[L],ct=CT[L],sd=SIDE[p[0]],sc=p[0].replace("s",""),ss=p[0].endsWith("s")?"s":"";
+  const t=T[L],ct=CT[L],sc=p[0].replace("s",""),ss=p[0].endsWith("s")?"s":"";
   const recSide={k:ss?sc+"|"+ss:sc,c:sc,sz:ss};
   const recDr=[p[1][0],p[1][1]].map(k=>({k:DRKMAP[k]+"|"+k,dr:DRKMAP[k],dv:k}));
-  if(!PICK[d.c])PICK[d.c]={sd:recSide,dr:null};                    // 小菜默认跟着推荐，饮料等客人选
-  const cur=PICK[d.c];
-  const chip=(kind,o,label)=>`<button class="chip" type="button" data-sel="${kind}|${d.c}|${o?o.k:""}" aria-pressed="${!!(o&&cur[kind]&&cur[kind].k===o.k)}">${esc(label)}</button>`;
-  const more=(kind,label)=>`<button class="chip more" type="button" data-more="${kind}|${d.c}">${esc(label)}</button>`;
-  const extra=(kind,recs)=>{const c=cur[kind];
-    return c&&!recs.some(o=>o.k===c.k)?chip(kind,c,pickName(c)+" +"+eur(pickPrice(c),L)):""};
-  const tot=d.p+(cur.sd?pickPrice(cur.sd):0)+(cur.dr?pickPrice(cur.dr):0);
+  const cur=PICK[d.c]||(PICK[d.c]={sd:{[recSide.k]:{o:recSide,q:1}},dr:{}});   // 小菜默认跟推荐，饮料留空
+  const line=(kind,e)=>`<li><span>${esc(pickName(e.o))}</span><span>+${eur(pickPrice(e.o),L)}</span>
+     <span class="qty has"><button class="qbtn" type="button" data-cq="${kind};${d.c};${e.o.k};-1" aria-label="−">−</button><span class="qn">${e.q}</span><button class="qbtn add" type="button" data-cq="${kind};${d.c};${e.o.k};1" aria-label="＋">＋</button></span></li>`;
+  const quick=(kind,o)=>cur[kind][o.k]?"":`<button class="chip" type="button" data-cq="${kind};${d.c};${o.k};1">${esc(pickName(o))} +${eur(pickPrice(o),L)}</button>`;
+  const group=(kind,label,recs)=>{
+    const es=Object.values(cur[kind]);
+    return `<div class="grp"><span class="qlab">${esc(label)}</span>
+      ${es.length?`<ul class="glist">${es.map(e=>line(kind,e)).join("")}</ul>`:""}
+      <div class="opt">${recs.map(o=>quick(kind,o)).join("")}<button class="chip more" type="button" data-more="${kind}|${d.c}">${esc(kind==="sd"?ct.otherSide:ct.otherDrink)}</button></div></div>`};
+  const sum=k=>Object.values(cur[k]).reduce((n,e)=>n+e.q*pickPrice(e.o),0);
+  const tot=d.p+sum("sd")+sum("dr");
   return `<div class="pair"><dt>${t.pairT}</dt><p>${esc(p[3+LI[L]])}</p>
-   <ul><li><span>${d.c} ${esc(L==="zh"?d.zh:d[L])}</span><span>${eur(d.p,L)}</span>${stepper(d.c,`data-c="${d.c}"`)}</li></ul>
-   <div class="opt"><span class="qlab">${ct.sideL}</span>
-     ${chip("sd",recSide,sideName(recSide)+" +"+eur(pickPrice(recSide),L))}${extra("sd",[recSide])}${more("sd",ct.otherSide)}</div>
-   <div class="opt"><span class="qlab">${ct.drinkPick}</span>
-     ${recDr.map(o=>chip("dr",o,pickName(o)+" +"+eur(pickPrice(o),L))).join("")}${extra("dr",recDr)}${more("dr",ct.otherDrink)}</div>
+   <ul class="glist"><li><span>${d.c} ${esc(L==="zh"?d.zh:d[L])}</span><span>${eur(d.p,L)}</span>${stepper(d.c,`data-c="${d.c}"`)}</li></ul>
+   ${group("sd",ct.sideL,[recSide])}
+   ${group("dr",ct.drinkPick,recDr)}
    <div class="pairtot"><span>${t.total}</span><b>${eur(tot,L)}</b></div>
    <button class="obtn combo" type="button" data-combo="${d.c}">${esc(ct.combo)}</button>
    <small>${t.pairNote}</small></div>`}
-// 「其他小菜 / 其他饮料」的全屏选择层
+function optByKey(kind,k){
+  if(kind==="sd")return sideOpts().find(o=>o.k===k);
+  const[dr,dv]=k.split("|");return {k:k,dr:dr,dv:dv||""}}
+function bumpPick(kind,c,k,n){
+  const cur=PICK[c]||(PICK[c]={sd:{},dr:{}});
+  const e=cur[kind][k]||(cur[kind][k]={o:optByKey(kind,k),q:0});
+  e.q=Math.max(0,Math.min(20,e.q+n));
+  if(!e.q)delete cur[kind][k];
+  if($("detpair"))$("detpair").innerHTML=pairBox(findDish(c));
+  if(!$("pick").hidden)pickCounts(kind,c)}
+function pickCounts(kind,c){
+  const cur=(PICK[c]||{})[kind]||{};
+  $("pick").querySelectorAll("[data-cq]").forEach(b=>{
+    const parts=b.dataset.cq.split(";"),k=parts[2],e=cur[k];
+    b.setAttribute("aria-pressed",!!e);
+    const s=b.querySelector(".pcount");if(s)s.textContent=e?"×"+e.q:""})}
+// 「加小菜 / 加饮料」：全屏列表，点一下加一份，可以连着加
 function openPick(kind,c){
-  const ct=CT[L],t=T[L],cur=(PICK[c]||{})[kind];
-  let body="";
-  if(kind==="sd"){
-    body=`<ul class="picklist">${sideOpts().map(o=>
-      `<li><button type="button" data-sel="sd|${c}|${o.k}" aria-pressed="${!!(cur&&cur.k===o.k)}"><span>${esc(sideName(o))}</span><b>${eur(pickPrice(o),L)}</b></button></li>`).join("")}</ul>`}
-  else{
-    body=["beers","wine","soft","water"].map(g=>
-      `<h5>${esc(t[g])}</h5><ul class="picklist">${drinkOpts(g).map(o=>
-        `<li><button type="button" data-sel="dr|${c}|${o.k}" aria-pressed="${!!(cur&&cur.k===o.k)}"><span>${esc(o.n(L))}</span><b>${eur(o.p,L)}</b></button></li>`).join("")}</ul>`).join("")}
+  const ct=CT[L],t=T[L];
+  const row=o=>`<li><button type="button" data-cq="${kind};${c};${o.k};1"><span>${esc(pickName(o))}</span><b>${eur(pickPrice(o),L)}</b><span class="pcount"></span></button></li>`;
+  const body=kind==="sd"
+    ?`<ul class="picklist">${sideOpts().map(row).join("")}</ul>`
+    :["beers","wine","soft","water"].map(g=>`<h5>${esc(t[g])}</h5><ul class="picklist">${drinkOpts(g).map(row).join("")}</ul>`).join("");
   $("pick").innerHTML=`<div class="pickhead"><h3>${esc(kind==="sd"?ct.pickSide:ct.pickDrink)}</h3>
      <button class="xbtn" type="button" id="pclose" aria-label="${esc(t.close)}">×</button></div>
-    <div class="pickbody">${body}
-      <button class="obtn sec pnone" type="button" data-sel="${kind}|${c}|">${esc(ct.pickNone)}</button></div>`;
-  $("pick").hidden=false;document.body.style.overflow="hidden";$("pclose").onclick=closePick;$("pclose").focus()}
+    <div class="pickbody">${body}</div>
+    <div class="pickfoot"><button class="obtn" type="button" id="pdone">${esc(ct.pickDone)}</button></div>`;
+  $("pick").hidden=false;document.body.style.overflow="hidden";
+  pickCounts(kind,c);
+  $("pclose").onclick=closePick;$("pdone").onclick=closePick;$("pclose").focus()}
 function closePick(){$("pick").hidden=true;document.body.style.overflow=$("sheet").hidden&&$("order").hidden?"":"hidden"}
-function setSel(kind,c,k){
-  const cur=PICK[c]||(PICK[c]={sd:null,dr:null});
-  if(!k){cur[kind]=null}
-  else if(cur[kind]&&cur[kind].k===k){cur[kind]=null}           // 再点一下取消
-  else if(kind==="sd"){const o=sideOpts().find(x=>x.k===k);if(o)cur.sd=o}
-  else{const[dr,dv]=k.split("|");cur.dr={k,dr,dv:dv||""}}
-  closePick();
-  if($("detpair"))$("detpair").innerHTML=pairBox(findDish(c))}
 function render(){
   const t=T[L]; document.documentElement.lang=L==="zh"?"zh-CN":L;
   $("tagline").textContent=t.tagline; $("h-eye").textContent=t.eye; $("h-title").textContent=t.title;
@@ -170,17 +178,17 @@ document.addEventListener("click",e=>{
     return}
   const cb=e.target.closest("[data-combo]");
   if(cb){e.preventDefault();
-    const c=cb.dataset.combo,sel=PICK[c]||{};
+    const c=cb.dataset.combo,sel=PICK[c]||{sd:{},dr:{}};
     cartBump(c,1,{c:c});
-    if(sel.sd)cartBump(sel.sd.k,1,{c:sel.sd.c,sz:sel.sd.sz});
-    if(sel.dr)cartBump(sel.dr.k,1,{dr:sel.dr.dr,dv:sel.dr.dv});
+    for(const e of Object.values(sel.sd||{}))cartBump(e.o.k,e.q,{c:e.o.c,sz:e.o.sz});
+    for(const e of Object.values(sel.dr||{}))cartBump(e.o.k,e.q,{dr:e.o.dr,dv:e.o.dv});
     flyToCart(cb);
     return}
   const mo=e.target.closest("[data-more]");
   if(mo){e.preventDefault();const[kind,c]=mo.dataset.more.split("|");openPick(kind,c);return}
-  const sl=e.target.closest("[data-sel]");
-  if(sl){e.preventDefault();const[kind,c,k]=sl.dataset.sel.split("|");
-    setSel(kind,c,sl.dataset.sel.split("|").slice(2).join("|"));return}
+  const cq=e.target.closest("[data-cq]");
+  if(cq){e.preventDefault();const[kind,c,k,n]=cq.dataset.cq.split(";");bumpPick(kind,c,k,+n);
+    if(+n>0&&!$("pick").hidden)flyToCart(cq);return}
   const op=e.target.closest("[data-opt]");
   if(op){e.preventDefault();const[kind,c,i]=op.dataset.opt.split("|");setOpt(kind,c,+i);return}
   const r=e.target.closest("[data-det]");if(r)openDet(r.dataset.det);

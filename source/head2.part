@@ -210,8 +210,15 @@ body.ordering .cartbar{display:none}
   background:none;border:0;border-bottom:1px solid var(--line);padding:14px 2px;font:600 16px var(--f-body);color:var(--ink);cursor:pointer;text-align:left}
 .picklist b{font-variant-numeric:tabular-nums;white-space:nowrap}
 .picklist button[aria-pressed="true"]{color:var(--red)}
-.picklist button[aria-pressed="true"]::after{content:"✓";margin-left:6px;font-weight:800}
-.pnone{width:100%;margin-top:20px}
+
+.pickfoot{position:sticky;bottom:0;background:var(--bg);padding:12px 0 calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line)}
+.pickfoot .obtn{width:100%}
+.picklist .pcount{font-weight:800;color:var(--red);min-width:28px;text-align:right}
+.grp{display:grid;gap:4px;margin-top:10px}
+.glist{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.glist li{display:flex;justify-content:space-between;align-items:center;gap:10px;font-variant-numeric:tabular-nums;padding:3px 0}
+.glist li span:first-child{flex:1;min-width:0}
+.glist .qbtn{width:28px;height:28px;font-size:15px}
 .staff{position:fixed;inset:0;z-index:30;background:#fff;color:#17140f;overflow-y:auto;padding:14px 18px calc(24px + env(safe-area-inset-bottom,0px));font-family:var(--f-zh)}
 .staff .sx{display:flex;justify-content:space-between;align-items:center;gap:10px;font-family:var(--f-body)}
 .staff .sx span{font-size:12.5px;font-weight:700;color:#8b8172}
