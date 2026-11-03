@@ -106,7 +106,7 @@ section{scroll-margin-top:64px;padding-top:22px}
 .first{margin-top:12px;border:1.5px dashed var(--red);border-radius:16px;padding:12px 14px;display:grid;gap:8px}
 .first b{font-size:14px}
 .first ul{list-style:none;margin:0;padding:0;display:grid;gap:6px;font-size:13.5px}
-.first li{display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:baseline}
+.first li{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center}
 .first .c{font-weight:800;background:var(--yellow);color:var(--yellow-ink);border-radius:6px;padding:0 6px;font-variant-numeric:tabular-nums}
 .dish .t{min-width:0}
 .dish h4{margin:0;font-size:15.5px;font-weight:800;line-height:1.25}
@@ -143,7 +143,13 @@ section{scroll-margin-top:64px;padding-top:22px}
 
 .qty2{display:flex;align-items:center;gap:6px}
 .qlab{font-size:11.5px;font-weight:800;color:var(--muted)}
-.spice{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:8px}
+.spice,.opt{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:8px}
+.buy{background:var(--chip);border-radius:14px;padding:10px 12px;display:grid;gap:2px}
+.buy .opt{margin-top:6px}
+.buyrow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
+.buyrow .qlab{font-size:13px}
+.buyq{display:flex;gap:10px;align-items:center}
+.herobuy{display:flex;align-items:center;justify-content:space-between;gap:10px;border-top:1px dashed var(--line);padding-top:10px}
 .chip{border:1px solid var(--line);background:var(--surface);color:var(--muted);font:700 11.5px var(--f-body);border-radius:999px;padding:4px 9px;cursor:pointer}
 .chip[aria-pressed="true"]{background:var(--red);border-color:var(--red);color:#fff}
 .dish.picked{background:linear-gradient(90deg,var(--chip),transparent 60%)}
@@ -207,6 +213,7 @@ body.hascart .foot{margin-bottom:70px}
       <h2><span id="h-title"></span><small>黄焖鸡米饭</small></h2>
       <p id="h-desc"></p>
       <div class="from"><span id="h-from"></span><b>9,00 €</b></div>
+      <div class="herobuy" id="herobuy"></div>
     </div>
   </article>
 

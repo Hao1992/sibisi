@@ -12,6 +12,8 @@ const PR=__PR__;
 const DET=__DET__;
 const CT=__CT__;
 const SP=__SP__;
+const CORI=__CORI__;
+const POT=c=>c.slice(0,2)==="1-";
 const LI={zh:0,es:1,en:2};
 const eur=(n,l)=>l==="en"?"€"+n.toFixed(2):n.toFixed(2).replace(".",",")+" €";
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -50,7 +52,8 @@ function render(){
   $("h-desc").textContent=t.desc; $("h-from").textContent=t.frm;
   $("steps").innerHTML=t.steps.map(s=>`<li>${esc(s)}</li>`).join("");
   $("first-t").textContent=t.firstT;
-  $("first").innerHTML=FIRST.map(f=>`<li><a class="c" href="#d-${f.c}">${f.c}</a><span>${esc(f[L])}</span></li>`).join("");
+  $("first").innerHTML=FIRST.map(f=>`<li><a class="c" href="#d-${f.c}">${f.c}</a><span>${esc(f[L])}</span>${stepper(f.c,`data-c="${f.c}"`)}</li>`).join("");
+  $("herobuy").innerHTML=`<span class="qlab">1-1 ${esc(L==="zh"?findDish("1-1").zh:findDish("1-1")[L])}</span>${stepper("1-1",'data-c="1-1"')}`;
   $("promise").innerHTML=`<b>${esc(t.promiseT)}</b><ul>${t.promise.map(([ic,x])=>`<li><span>${ic}</span>${esc(x)}</li>`).join("")}</ul>`;
   $("f-take").textContent=t.take; $("copy").textContent=t.copy;
   $("f-all").innerHTML=algRow("G H S Sé P M",true)+`<div style="margin-top:6px">${esc(t.all)}</div>`;
@@ -74,7 +77,7 @@ function render(){
         ?`<div class="qty2"><span class="qlab">${SZ[L].s}</span>${stepper(d.c+"|s",`data-c="${d.c}" data-sz="s"`)}</div>
            <div class="qty2"><span class="qlab">${SZ[L].l}</span>${stepper(d.c+"|l",`data-c="${d.c}" data-sz="l"`)}</div>`
         :stepper(d.c,`data-c="${d.c}"`);
-      const spice=s.id==="hm"?`<div class="spice"><span class="qlab">${CT[L].spice}</span>${SP.map((x,i)=>`<button class="chip" type="button" data-sp="${d.c}|${i}" aria-pressed="${i===(SPICE[d.c]||0)}">${esc(x[LI[L]])}</button>`).join("")}</div>`:"";
+      const spice=optUI(d.c);
       const price=d.p2?`<span class="pz">${L==="zh"?"小":L==="en"?"S":"P"}</span> ${eur(d.p,L)}<br><span class="pz">${L==="zh"?"大":L==="en"?"L":"G"}</span> ${eur(d.p2,L)}`:eur(d.p,L);
       h+=`<div class="dish" id="d-${d.c}"${det}><div class="thumb">${d.img?`<img src="img/${d.img}.jpg" alt="" loading="lazy">`:illo(d.c,"")}<span class="badge">${d.c}</span></div>
         <div class="t"><h4>${esc(name)}</h4><div class="zhn">${esc(sub)}</div>${desc?`<p>${esc(desc)}</p>`:""}${taste?`<div class="taste">${taste}</div>`:""}${tags?`<div class="tags">${tags}</div>`:""}${algRow(d.al,true)}${pairLine(d)}${DET[d.c]?`<span class="more">${t.more}</span>`:""}${spice}<div class="qwrap">${qty}</div></div>
@@ -99,27 +102,28 @@ function openDet(c){
   const sh=$("sheet");
   sh.innerHTML=`<button class="close" id="close" aria-label="${t.close}">×</button>${d.img?`<img src="img/${d.img}.jpg" alt="">`:`<div class="ph">${illo(d.c,t.illo)}</div>`}
    <div class="in"><h3>${esc(L==="zh"?d.zh:d[L])}</h3><div class="meta"><span>${d.c} · ${esc(L==="zh"?d.es:d.zh)}</span><b>${price}</b></div>
+   <div id="detbuy">${buyBlock(c)}</div>
    <div class="algbox"><dt>${lb.alg}</dt>${algRow(d.al)}</div>
    <dl>${rows}</dl>${pairBox(d)}</div>`;
-  sh.hidden=false;$("scrim").hidden=false;document.body.style.overflow="hidden";$("close").focus();
+  DETC=c;sh.hidden=false;$("scrim").hidden=false;document.body.style.overflow="hidden";$("close").focus();
   $("close").onclick=closeDet;
 }
-function closeDet(){$("sheet").hidden=true;$("scrim").hidden=true;document.body.style.overflow=""}
+function closeDet(){DETC=null;$("sheet").hidden=true;$("scrim").hidden=true;document.body.style.overflow=""}
 document.addEventListener("click",e=>{
   const q=e.target.closest("[data-q]");
   if(q){e.preventDefault();cartBump(q.dataset.k,+q.dataset.q,q.dataset);return}
-  const sp=e.target.closest("[data-sp]");
-  if(sp){e.preventDefault();const[c,i]=sp.dataset.sp.split("|");setSpice(c,+i);return}
+  const op=e.target.closest("[data-opt]");
+  if(op){e.preventDefault();const[kind,c,i]=op.dataset.opt.split("|");setOpt(kind,c,+i);return}
   const r=e.target.closest("[data-det]");if(r)openDet(r.dataset.det);
   else if(e.target.id==="scrim"){closeDet();closeOrder()}
 });
 document.addEventListener("keydown",e=>{
   if(e.key==="Escape"){if(!$("staff").hidden)closeStaff();else if(!$("order").hidden)closeOrder();else closeDet()}
-  if(e.target.closest&&e.target.closest("[data-q],[data-sp]"))return;
+  if(e.target.closest&&e.target.closest("[data-q],[data-opt]"))return;
   const r=e.target.closest&&e.target.closest("[data-det]");
   if(r&&(e.key==="Enter"||e.key===" ")){e.preventDefault();openDet(r.dataset.det)}
 });
-function setLang(l){L=l;try{localStorage.setItem("lang",l)}catch(e){}render()}
+function setLang(l){L=l;store.set("lang",l);render()}
 document.querySelectorAll(".lang button").forEach(b=>b.addEventListener("click",()=>setLang(b.dataset.l)));
 $("copy").addEventListener("click",e=>{
   const b=e.currentTarget;const sel=()=>getSelection().selectAllChildren($("phone"));
@@ -139,13 +143,46 @@ const DRINK={};
 for(const g of ["beers","wine","soft","water"])DR[g].forEach((x,i)=>{DRINK["dr-"+g+"-"+i]=x});
 const drName=(x,l)=>typeof x[0]==="string"?x[0]:x[0][LI[l]];
 const CKEY="sibisi.cart";
-let CART={},SPICE={};
-function cartSave(){try{localStorage.setItem(CKEY,JSON.stringify({t:Date.now(),c:CART,s:SPICE}))}catch(e){}}
-(function(){try{const r=JSON.parse(localStorage.getItem(CKEY)||"null");
- if(r&&Date.now()-r.t<6*36e5){CART=r.c||{};SPICE=r.s||{}}}catch(e){}})();
+const store={
+  get(k){for(const s of [localStorage,sessionStorage]){try{const v=s.getItem(k);if(v)return v}catch(e){}}return null},
+  set(k,v){for(const s of [localStorage,sessionStorage]){try{s.setItem(k,v)}catch(e){}}},
+  del(k){for(const s of [localStorage,sessionStorage]){try{s.removeItem(k)}catch(e){}}}};
+let CART={},OPT={},DETC=null;
+function cartSave(){store.set(CKEY,JSON.stringify({t:Date.now(),c:CART,o:OPT}))}
+(function(){try{const r=JSON.parse(store.get(CKEY)||"null");
+ if(r&&Date.now()-r.t<12*36e5){CART=r.c||{};OPT=r.o||{};
+   if(r.s)for(const k in r.s)OPT[k]=Object.assign({sp:r.s[k]},OPT[k])}}catch(e){}})();
+// 手机上切后台、关标签前再存一次，别让刚点的菜丢了
+addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")cartSave()});
+addEventListener("pagehide",cartSave);
 const stepper=(k,data)=>{const q=CART[k]?CART[k].q:0;
   return `<span class="qty${q?" has":""}" data-k="${k}"><button class="qbtn" type="button" data-q="-1" data-k="${k}" aria-label="−">−</button><span class="qn">${q}</span><button class="qbtn add" type="button" data-q="1" data-k="${k}" ${data||""} aria-label="＋">＋</button></span>`};
-const itPrice=it=>it.dr?DRINK[it.dr][1]:(it.sz==="l"?findDish(it.c).p2:findDish(it.c).p);
+const exList=c=>((OPT[c]||{}).ex||[]);
+const exSum=c=>exList(c).reduce((n,i)=>n+EXTRAS[i][1],0);
+const itPrice=it=>it.dr?DRINK[it.dr][1]:((it.sz==="l"?findDish(it.c).p2:findDish(it.c).p)+(it.sz?0:exSum(it.c)));
+// 这道菜选了什么：辣度（黄焖锅一定写出来）、不要香菜、加配菜
+function optTxt(it,l){
+  if(it.dr||it.sz)return [];
+  const o=OPT[it.c]||{},out=[];
+  if(POT(it.c))out.push(SP[o.sp||0][LI[l]]);
+  if(o.nc)out.push(CT[l].noCo);
+  exList(it.c).forEach(i=>out.push("+"+EXTRAS[i][0][LI[l]]));
+  return out}
+const chipBtn=(d,label,on)=>`<button class="chip" type="button" data-opt="${d}" aria-pressed="${on}">${esc(label)}</button>`;
+function optUI(c){
+  const o=OPT[c]||{},ct=CT[L],out=[];
+  if(POT(c)){
+    out.push(`<div class="opt"><span class="qlab">${ct.spice}</span>${SP.map((x,i)=>chipBtn(`sp|${c}|${i}`,x[LI[L]],(o.sp||0)===i)).join("")}</div>`);
+    out.push(`<div class="opt"><span class="qlab">${ct.extras}</span>${EXTRAS.map((e,i)=>chipBtn(`ex|${c}|${i}`,nm(e[0])+" +"+eur(e[1],L),exList(c).includes(i))).join("")}</div>`)}
+  if(CORI.includes(c))out.push(`<div class="opt">${chipBtn(`nc|${c}|0`,ct.noCo,!!o.nc)}</div>`);
+  return out.join("")}
+function buyBlock(c){
+  const d=findDish(c);if(!d)return "";
+  const q=d.p2
+    ?`<div class="qty2"><span class="qlab">${SZ[L].s}</span>${stepper(c+"|s",`data-c="${c}" data-sz="s"`)}</div>
+      <div class="qty2"><span class="qlab">${SZ[L].l}</span>${stepper(c+"|l",`data-c="${c}" data-sz="l"`)}</div>`
+    :stepper(c,`data-c="${c}"`);
+  return `<div class="buy">${optUI(c)}<div class="buyrow"><span class="qlab">${esc(CT[L].pick)}</span><span class="buyq">${q}</span></div></div>`}
 function itName(it,l){
   if(it.dr)return drName(DRINK[it.dr],l);
   const d=findDish(it.c);let n=l==="zh"?d.zh:d[l];
@@ -155,17 +192,21 @@ const cKeys=()=>Object.keys(CART);
 const cCount=()=>cKeys().reduce((n,k)=>n+CART[k].q,0);
 const cTotal=()=>cKeys().reduce((n,k)=>n+CART[k].q*itPrice(CART[k]),0);
 const zhLines=()=>cKeys().map(k=>{const it=CART[k];
-  return {n:itName(it,"zh"),q:it.q,o:it.sp!=null?SP[it.sp][0]:""}});
+  return {n:itName(it,"zh"),q:it.q,o:optTxt(it,"zh").join(" · ")}});
 function cartBump(k,n,ds){
   let it=CART[k];
   if(!it){if(n<0)return;
     it=CART[k]=ds&&ds.dr?{dr:ds.dr,q:0}:{c:ds.c,q:0};
-    if(ds&&ds.sz)it.sz=ds.sz;
-    if(it.c&&findDish(it.c)&&SPICE[it.c]!=null)it.sp=SPICE[it.c]}
+    if(ds&&ds.sz)it.sz=ds.sz}
   it.q=Math.min(99,it.q+n);
   if(it.q<1)delete CART[k];
   cartSave();syncCart()}
-function setSpice(c,i){SPICE[c]=i;if(CART[c])CART[c].sp=i;cartSave();syncCart()}
+function setOpt(kind,c,i){
+  const o=OPT[c]||(OPT[c]={});
+  if(kind==="sp")o.sp=i;
+  else if(kind==="nc")o.nc=!o.nc;
+  else{const a=o.ex||(o.ex=[]),p=a.indexOf(i);p<0?a.push(i):a.splice(p,1);a.sort((x,y)=>x-y)}
+  cartSave();syncCart()}
 function syncCart(){
   const ct=CT[L],n=cCount();
   document.querySelectorAll("[data-k]").forEach(el=>{
@@ -174,17 +215,19 @@ function syncCart(){
     const o=el.querySelector(".qn");if(o)o.textContent=q});
   document.querySelectorAll("#menu .dish").forEach(el=>{const c=el.id.slice(2);
     el.classList.toggle("picked",!!(CART[c]||CART[c+"|s"]||CART[c+"|l"]))});
-  document.querySelectorAll("[data-sp]").forEach(b=>{const[c,i]=b.dataset.sp.split("|");
-    b.setAttribute("aria-pressed",(SPICE[c]||0)===+i)});
+  document.querySelectorAll("[data-opt]").forEach(b=>{const[kind,c,i]=b.dataset.opt.split("|");const o=OPT[c]||{};
+    b.setAttribute("aria-pressed",kind==="sp"?(o.sp||0)===+i:kind==="nc"?!!o.nc:exList(c).includes(+i))});
   $("cartbar").hidden=!n;document.body.classList.toggle("hascart",!!n);
   if(n){$("cb-n").textContent=ct.items.replace("%s",n);$("cb-t").textContent=eur(cTotal(),L);$("cb-go").textContent=ct.view}
+  if(!$("sheet").hidden&&DETC&&$("detbuy"))$("detbuy").innerHTML=buyBlock(DETC);
   if(!$("order").hidden)renderOrder();
   if(!$("staff").hidden)renderStaff();
 }
 function renderOrder(){
   const ct=CT[L],ks=cKeys();
   const rows=ks.map(k=>{const it=CART[k];
-    return `<li><div class="on-n">${esc(itName(it,L))}${it.sp!=null?`<em class="on-o">${esc(SP[it.sp][LI[L]])}</em>`:""}</div>
+    const o=optTxt(it,L).join(" · ");
+    return `<li><div class="on-n">${esc(itName(it,L))}${o?`<em class="on-o">${esc(o)}</em>`:""}</div>
       ${stepper(k)}<div class="on-p">${eur(it.q*itPrice(it),L)}</div></li>`}).join("");
   const zh=zhLines().map(x=>`<div class="zhrow"><span class="zhn2">${esc(x.n)}${x.o?" · "+x.o:""}</span><span>×${x.q}</span></div>`).join("");
   $("order").innerHTML=`<div class="in">
@@ -221,6 +264,6 @@ function closeOrder(){$("order").hidden=true;$("scrim").hidden=true;document.bod
 function openStaff(){renderStaff();$("staff").hidden=false;document.body.style.overflow="hidden"}
 function closeStaff(){$("staff").hidden=true;document.body.style.overflow=$("order").hidden?"":"hidden"}
 $("cb-go").addEventListener("click",openOrder);
-(function(){let l=null;try{l=localStorage.getItem("lang")}catch(e){}
+(function(){let l=store.get("lang");
  if(!l){const n=(navigator.language||"es").slice(0,2);l=n==="zh"?"zh":(n==="es"||n==="ca")?"es":"en"}
  L=T[l]?l:"es";render()})();

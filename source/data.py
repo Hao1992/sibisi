@@ -179,24 +179,27 @@ PR = {
 
 # --- 点单（购物车）---------------------------------------------------------
 # 辣度（只用于黄焖锅 1-x），顺序即菜单上的顺序，默认第一个
+# 带香菜、可以要求不放的菜（2-4 / 3-4 / 4-2 写在详情里，2-1 / 2-8 / 2-9 照片里有）
+CORI = ["2-1", "2-4", "2-8", "2-9", "3-4", "4-2"]
+
 SP = [["不辣", "Sin picante", "None"], ["微辣", "Suave", "Mild"],
       ["中辣", "Medio", "Medium"], ["特辣", "Muy picante", "Extra hot"]]
 
 # 购物车界面文字。中文块（给店员看的那部分）不走这里，固定中文写在 app.js.tpl 里。
 CT = {
- "zh": dict(view="查看我的单子", title="我的单子", items="%s 份", total="合计",
+ "zh": dict(extras="加配菜", noCo="不要香菜", pick="加入我的单子", view="查看我的单子", title="我的单子", items="%s 份", total="合计",
    spice="辣度", staff="给店员看 ›", copy="复制", copied="已复制", clear="清空", back="继续点菜",
    empty="还没有选菜。在菜单上点 ＋ 就可以加进来。",
    notOrder="这是一份清单，还没有下单。选好后把手机给店员看就行。",
    priceNote="价格仅供参考，最终以店员确认为准。",
    staffNote="客人自己选的，还没下单"),
- "es": dict(view="Ver mi pedido", title="Mi pedido", items="%s platos", total="Total",
+ "es": dict(extras="Extras", noCo="Sin cilantro", pick="Añadir a mi pedido", view="Ver mi pedido", title="Mi pedido", items="%s platos", total="Total",
    spice="Picante", staff="Enseñar al personal ›", copy="Copiar", copied="Copiado", clear="Vaciar", back="Seguir pidiendo",
    empty="Aún no has elegido nada. Pulsa ＋ en cualquier plato para añadirlo.",
    notOrder="Esto es solo una lista: el pedido todavía no está hecho. Cuando lo tengas, enséñaselo al personal.",
    priceNote="Precios orientativos; el personal confirma el total.",
    staffNote="Lista hecha por el cliente, aún sin pedir"),
- "en": dict(view="View my order", title="My order", items="%s items", total="Total",
+ "en": dict(extras="Extras", noCo="No coriander", pick="Add to my order", view="View my order", title="My order", items="%s items", total="Total",
    spice="Spice", staff="Show to staff ›", copy="Copy", copied="Copied", clear="Clear", back="Keep choosing",
    empty="Nothing chosen yet. Tap ＋ on any dish to add it.",
    notOrder="This is just a list — nothing has been ordered yet. When you're ready, show it to our staff.",
