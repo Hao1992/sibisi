@@ -158,6 +158,28 @@ DR = dict(beers=[["Amstel 1/3", 2.5], ["Amstel Radler 1/3", 2.5], ["Heineken", 2
   soft=[[["可口可乐 / 零度", "Coca-Cola / Zero", "Coca-Cola / Zero"], 2], [["芬达 橙味 / 柠檬味", "Fanta naranja / limón", "Fanta orange / lemon"], 2], ["Nestea", 2.2], [["Aquarius 橙味 / 柠檬味", "Aquarius naranja / limón", "Aquarius orange / lemon"], 2.2], [["绿茶", "Té verde", "Green tea"], 2.5], [["红茶", "Té negro", "Black tea"], 2.5], [["王老吉凉茶", "Wanglaoji (té de hierbas)", "Wanglaoji herbal tea"], 2.5]],
   water=[[["Lanjarón 矿泉水", "Agua Lanjarón", "Lanjarón water"], 1.5]])
 
+# 酒水示意图：[容器, 瓶身/罐身色, 标签色]
+# bot 玻璃瓶（1/3，啤酒）· can 铁听 · pet 塑料瓶 · glass 高脚杯 · wbot 整瓶葡萄酒
+DRILL = {
+ "dr-beers-0": ["bot", "#2f6b35", "#c8352b"],   # Amstel
+ "dr-beers-1": ["bot", "#2f6b35", "#e8b62c"],   # Amstel Radler 柠檬
+ "dr-beers-2": ["bot", "#17683c", "#f1ece0"],   # Heineken
+ "dr-beers-3": ["bot", "#2f6b35", "#1d4f8f"],   # 青岛
+ "dr-beers-4": ["bot", "#8a4a1c", "#c8352b"],   # Águila（棕瓶）
+ "dr-wine-0":  ["glass", "#e4ce63", ""],        # 白葡萄酒（杯）
+ "dr-wine-1":  ["glass", "#8e2340", ""],        # 红葡萄酒（杯）
+ "dr-wine-2":  ["wbot", "#23402a", "#e8ded0"],  # 整瓶
+ "dr-soft-0":  ["can", "#c8352b", "#f1ece0"],   # 可乐
+ "dr-soft-1":  ["can", "#e8742a", "#f1ece0"],   # 芬达
+ "dr-soft-2":  ["can", "#d9a441", "#8a4a1c"],   # Nestea
+ "dr-soft-3":  ["can", "#3f86c4", "#f1ece0"],   # Aquarius
+ "dr-soft-4":  ["pet", "#4f9a4a", "#f1ece0"],   # 绿茶
+ "dr-soft-5":  ["pet", "#7a4a24", "#f1ece0"],   # 红茶
+ "dr-soft-6":  ["can", "#cf2a22", "#e8b62c"],   # 王老吉
+ "dr-water-0": ["pet", "#9fc9e0", "#2f6b9a"]}
+# 同一行里长得不一样的那几款
+DRILLV = {"ccz": ["can", "#1d1d1d", "#c8352b"]}
+
 SIDE = {"6-1": [["五香牛肉", "Ternera a las cinco especias", "Five-spice beef"], 6],
         "6-2": [["凉拌黄瓜", "Pepino aliñado", "Cucumber salad"], 5],
         "6-4": [["凉拌海藻", "Ensalada de alga wakame", "Wakame salad"], 5],

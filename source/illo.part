@@ -22,3 +22,37 @@ function illo(code,label){
   return `<svg viewBox="0 0 160 100" preserveAspectRatio="xMidYMid slice" role="img" aria-label="示意图"><rect width="160" height="100" fill="#efe4c8"/>${g}${label?`<text x="154" y="94" text-anchor="end" font-size="7" font-weight="700" fill="#6f6656" font-family="sans-serif">${label}</text>`:""}</svg>`;
 }
 
+// 酒水示意图：只画容器——玻璃瓶 / 铁听 / 塑料瓶 / 高脚杯 / 整瓶，颜色区分，不画任何商标
+function drIllo(kind,body,label){
+  const hi='<rect x="37" y="44" width="4.5" height="34" rx="2.2" fill="#ffffff" opacity=".25"/>';
+  let g="";
+  if(kind==="bot")
+    g=`<rect x="41" y="5" width="18" height="9" rx="2.5" fill="#4a4036"/>
+       <path d="M44 12h12v14q0 5 4 9l3 4q5 6 5 14v30q0 5-5 5h-26q-5 0-5-5v-30q0-8 5-14l3-4q4-4 4-9z" fill="${body}"/>
+       <rect x="32" y="56" width="36" height="21" fill="${label}"/>${hi}`;
+  else if(kind==="can")
+    g=`<rect x="33" y="12" width="34" height="8" rx="3" fill="#c3bcae"/>
+       <ellipse cx="50" cy="16" rx="5.5" ry="2.4" fill="#9b948a"/>
+       <rect x="31" y="17" width="38" height="67" rx="8" fill="${body}"/>
+       <rect x="31" y="40" width="38" height="19" fill="${label}"/>
+       <rect x="33" y="79" width="34" height="6" rx="3" fill="#c3bcae"/>${hi}`;
+  else if(kind==="pet")
+    g=`<rect x="38" y="4" width="24" height="11" rx="2.5" fill="${body}"/>
+       <rect x="38" y="15" width="24" height="3.5" fill="#cfc7b6"/>
+       <path d="M44 18h12v5q0 4 5 8l3 2q6 5 6 13v29q0 5-5 5h-28q-5 0-5-5v-29q0-8 6-13l3-2q5-4 5-8z" fill="${body}" opacity=".72"/>
+       <path d="M31 46h38M31 76h38M31 82h38" stroke="#ffffff" stroke-width="2.4" opacity=".55" stroke-linecap="round"/>
+       <rect x="30" y="52" width="40" height="20" fill="${label}" opacity=".95"/>${hi}`;
+  else if(kind==="glass")
+    g=`<path d="M31 15h38q0 29-19 37q-19-8-19-37z" fill="#fbfaf6" stroke="#a89c85" stroke-width="2"/>
+       <path d="M34 25h32q-2 21-16 27q-14-6-16-27z" fill="${body}"/>
+       <rect x="47.8" y="51" width="4.4" height="23" fill="#cdc3ad"/>
+       <ellipse cx="50" cy="77" rx="17" ry="5" fill="#cdc3ad"/>
+       <ellipse cx="50" cy="77" rx="17" ry="5" fill="none" stroke="#a89c85" stroke-width="1.2"/>`;
+  else
+    g=`<rect x="42" y="4" width="16" height="13" rx="1.5" fill="${label}"/>
+       <path d="M43 10h14v24q0 4 5 9l2 2q4 5 4 12v26q0 5-5 5h-26q-5 0-5-5v-26q0-7 4-12l2-2q5-5 5-9z" fill="${body}"/>
+       <rect x="32" y="60" width="36" height="19" fill="#efe9da"/>${hi}`;
+  return `<svg class="dri" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" role="img" aria-label="">`
+    +`<rect width="100" height="100" fill="#efe4c8"/>${g}</svg>`;
+}
+const drArt=(id,dv)=>{const a=(dv&&DRILLV[dv])||DRILL[id];return a?drIllo(a[0],a[1],a[2]):""};

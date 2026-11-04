@@ -17,6 +17,8 @@ const DRKMAP=__DRKMAP__;
 const UPSELL=__UPSELL__;
 const TEL=__TEL__;
 const HOURS=__HOURS__;
+const DRILL=__DRILL__;
+const DRILLV=__DRILLV__;
 const MAP=__MAP__;
 const REV=__REV__;
 const TOP=__TOP__;
@@ -327,7 +329,7 @@ function render(){
     h+=`</section>`;
   }
   h+=`<section id="bebidas"><div class="sh"><h3>${t.drinks}</h3>${L==="zh"?"":'<span class="zh">酒水</span>'}</div><div class="drinks">`;
-  for(const k of ["beers","wine","soft","water"])h+=`<div><h5>${t[k]}</h5><ul>${DR[k].map((x,i)=>{const id=`dr-${k}-${i}`;return `<li><span>${esc(drName(x,L))}</span><span class="dr-r">${eur(x[1],L)}${stepper(id,`data-dr="${id}"`)}</span></li>`}).join("")}</ul></div>`;
+  for(const k of ["beers","wine","soft","water"])h+=`<div><h5>${t[k]}</h5><ul>${DR[k].map((x,i)=>{const id=`dr-${k}-${i}`;return `<li><span class="dth">${drArt(id)}</span><span class="dn">${esc(drName(x,L))}</span><span class="dr-r">${eur(x[1],L)}${stepper(id,`data-dr="${id}"`)}</span></li>`}).join("")}</ul></div>`;
   h+=`</div></section>`;
   $("menu").innerHTML=h;
   syncCart();
@@ -340,7 +342,7 @@ const packOpt=k=>k.indexOf("dr-")===0
 const packTotal=p=>p.items.reduce((n,[k,q])=>n+q*pickPrice(packOpt(k)),0);
 // 套餐里每一行的小图：菜用实拍缩略图，酒水用一个瓶子符号
 const BOTTLE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2h4v3.5l2 3V21a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V8.5l2-3z"/><path d="M8 13h8"/></svg>';
-const packThumb=o=>{if(o.dr)return BOTTLE;const d=findDish(o.c);
+const packThumb=o=>{if(o.dr)return drArt(o.dr,o.dv)||BOTTLE;const d=findDish(o.c);
   return d&&d.img?`<img src="img/t/${d.img}.jpg" alt="" loading="lazy">`:BOTTLE};
 function renderPacks(){
   const t=T[L];

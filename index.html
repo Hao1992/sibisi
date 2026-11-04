@@ -156,7 +156,9 @@ section{scroll-margin-top:64px;padding-top:22px}
 .drinks h5{margin:0 0 4px;font-size:14.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .drinks ul{list-style:none;margin:0;padding:0}
 .drinks li{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px dotted var(--line);font-variant-numeric:tabular-nums}
-.drinks li>span:first-child{flex:1;min-width:0}
+.drinks li .dth{flex:none;width:40px;height:40px;border-radius:9px;overflow:hidden;display:block}
+.drinks li .dn{flex:1;min-width:0}
+svg.dri{width:100%;height:100%;display:block}
 .foot{margin-top:28px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;display:grid;gap:10px;font-size:15.5px}
 .foot .row{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .foot .hrs{display:grid;gap:3px;margin-top:3px;width:100%}
@@ -447,6 +449,8 @@ const DRKMAP={"ts": "dr-beers-3", "am": "dr-beers-0", "hk": "dr-beers-2", "ag": 
 const UPSELL=["6-5|s", "2-11", "6-4", "6-1"];
 const TEL="+34671343226";
 const HOURS=[{"d": [1, 2, 3], "zh": "周一至周三", "es": "Lun–Mié", "en": "Mon–Wed", "h": {"zh": "12:30–16:30", "es": "12:30–16:30", "en": "12:30–16:30"}}, {"d": [4], "zh": "周四", "es": "Jueves", "en": "Thursday", "h": {"zh": "休息", "es": "Cerrado", "en": "Closed"}}, {"d": [5, 6, 0], "zh": "周五至周日", "es": "Vie–Dom", "en": "Fri–Sun", "h": {"zh": "12:30–16:30 · 20:00–23:00", "es": "12:30–16:30 · 20:00–23:00", "en": "12:30–16:30 · 20:00–23:00"}}];
+const DRILL={"dr-beers-0": ["bot", "#2f6b35", "#c8352b"], "dr-beers-1": ["bot", "#2f6b35", "#e8b62c"], "dr-beers-2": ["bot", "#17683c", "#f1ece0"], "dr-beers-3": ["bot", "#2f6b35", "#1d4f8f"], "dr-beers-4": ["bot", "#8a4a1c", "#c8352b"], "dr-wine-0": ["glass", "#e4ce63", ""], "dr-wine-1": ["glass", "#8e2340", ""], "dr-wine-2": ["wbot", "#23402a", "#e8ded0"], "dr-soft-0": ["can", "#c8352b", "#f1ece0"], "dr-soft-1": ["can", "#e8742a", "#f1ece0"], "dr-soft-2": ["can", "#d9a441", "#8a4a1c"], "dr-soft-3": ["can", "#3f86c4", "#f1ece0"], "dr-soft-4": ["pet", "#4f9a4a", "#f1ece0"], "dr-soft-5": ["pet", "#7a4a24", "#f1ece0"], "dr-soft-6": ["can", "#cf2a22", "#e8b62c"], "dr-water-0": ["pet", "#9fc9e0", "#2f6b9a"]};
+const DRILLV={"ccz": ["can", "#1d1d1d", "#c8352b"]};
 const MAP="https://maps.app.goo.gl/jDEgD1ig8q6Gt72TA";
 const REV="https://www.google.com/search?q=Sibisi+restaurant+ramen+Valencia#lrd=0xd604ff2c6100665:0x904337579649cf0,3,,,";
 const TOP=["1-1", "2-3", "5-1"];
@@ -500,6 +504,40 @@ function illo(code,label){
   return `<svg viewBox="0 0 160 100" preserveAspectRatio="xMidYMid slice" role="img" aria-label="示意图"><rect width="160" height="100" fill="#efe4c8"/>${g}${label?`<text x="154" y="94" text-anchor="end" font-size="7" font-weight="700" fill="#6f6656" font-family="sans-serif">${label}</text>`:""}</svg>`;
 }
 
+// 酒水示意图：只画容器——玻璃瓶 / 铁听 / 塑料瓶 / 高脚杯 / 整瓶，颜色区分，不画任何商标
+function drIllo(kind,body,label){
+  const hi='<rect x="37" y="44" width="4.5" height="34" rx="2.2" fill="#ffffff" opacity=".25"/>';
+  let g="";
+  if(kind==="bot")
+    g=`<rect x="41" y="5" width="18" height="9" rx="2.5" fill="#4a4036"/>
+       <path d="M44 12h12v14q0 5 4 9l3 4q5 6 5 14v30q0 5-5 5h-26q-5 0-5-5v-30q0-8 5-14l3-4q4-4 4-9z" fill="${body}"/>
+       <rect x="32" y="56" width="36" height="21" fill="${label}"/>${hi}`;
+  else if(kind==="can")
+    g=`<rect x="33" y="12" width="34" height="8" rx="3" fill="#c3bcae"/>
+       <ellipse cx="50" cy="16" rx="5.5" ry="2.4" fill="#9b948a"/>
+       <rect x="31" y="17" width="38" height="67" rx="8" fill="${body}"/>
+       <rect x="31" y="40" width="38" height="19" fill="${label}"/>
+       <rect x="33" y="79" width="34" height="6" rx="3" fill="#c3bcae"/>${hi}`;
+  else if(kind==="pet")
+    g=`<rect x="38" y="4" width="24" height="11" rx="2.5" fill="${body}"/>
+       <rect x="38" y="15" width="24" height="3.5" fill="#cfc7b6"/>
+       <path d="M44 18h12v5q0 4 5 8l3 2q6 5 6 13v29q0 5-5 5h-28q-5 0-5-5v-29q0-8 6-13l3-2q5-4 5-8z" fill="${body}" opacity=".72"/>
+       <path d="M31 46h38M31 76h38M31 82h38" stroke="#ffffff" stroke-width="2.4" opacity=".55" stroke-linecap="round"/>
+       <rect x="30" y="52" width="40" height="20" fill="${label}" opacity=".95"/>${hi}`;
+  else if(kind==="glass")
+    g=`<path d="M31 15h38q0 29-19 37q-19-8-19-37z" fill="#fbfaf6" stroke="#a89c85" stroke-width="2"/>
+       <path d="M34 25h32q-2 21-16 27q-14-6-16-27z" fill="${body}"/>
+       <rect x="47.8" y="51" width="4.4" height="23" fill="#cdc3ad"/>
+       <ellipse cx="50" cy="77" rx="17" ry="5" fill="#cdc3ad"/>
+       <ellipse cx="50" cy="77" rx="17" ry="5" fill="none" stroke="#a89c85" stroke-width="1.2"/>`;
+  else
+    g=`<rect x="42" y="4" width="16" height="13" rx="1.5" fill="${label}"/>
+       <path d="M43 10h14v24q0 4 5 9l2 2q4 5 4 12v26q0 5-5 5h-26q-5 0-5-5v-26q0-7 4-12l2-2q5-5 5-9z" fill="${body}"/>
+       <rect x="32" y="60" width="36" height="19" fill="#efe9da"/>${hi}`;
+  return `<svg class="dri" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" role="img" aria-label="">`
+    +`<rect width="100" height="100" fill="#efe4c8"/>${g}</svg>`;
+}
+const drArt=(id,dv)=>{const a=(dv&&DRILLV[dv])||DRILL[id];return a?drIllo(a[0],a[1],a[2]):""};
 
 /* ---------- 筛选：素食 / 不辣 / 避开某个过敏原 ---------- */
 const fls=d=>(d.fl||"").split(" ");
@@ -781,7 +819,7 @@ function render(){
     h+=`</section>`;
   }
   h+=`<section id="bebidas"><div class="sh"><h3>${t.drinks}</h3>${L==="zh"?"":'<span class="zh">酒水</span>'}</div><div class="drinks">`;
-  for(const k of ["beers","wine","soft","water"])h+=`<div><h5>${t[k]}</h5><ul>${DR[k].map((x,i)=>{const id=`dr-${k}-${i}`;return `<li><span>${esc(drName(x,L))}</span><span class="dr-r">${eur(x[1],L)}${stepper(id,`data-dr="${id}"`)}</span></li>`}).join("")}</ul></div>`;
+  for(const k of ["beers","wine","soft","water"])h+=`<div><h5>${t[k]}</h5><ul>${DR[k].map((x,i)=>{const id=`dr-${k}-${i}`;return `<li><span class="dth">${drArt(id)}</span><span class="dn">${esc(drName(x,L))}</span><span class="dr-r">${eur(x[1],L)}${stepper(id,`data-dr="${id}"`)}</span></li>`}).join("")}</ul></div>`;
   h+=`</div></section>`;
   $("menu").innerHTML=h;
   syncCart();
@@ -794,7 +832,7 @@ const packOpt=k=>k.indexOf("dr-")===0
 const packTotal=p=>p.items.reduce((n,[k,q])=>n+q*pickPrice(packOpt(k)),0);
 // 套餐里每一行的小图：菜用实拍缩略图，酒水用一个瓶子符号
 const BOTTLE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2h4v3.5l2 3V21a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V8.5l2-3z"/><path d="M8 13h8"/></svg>';
-const packThumb=o=>{if(o.dr)return BOTTLE;const d=findDish(o.c);
+const packThumb=o=>{if(o.dr)return drArt(o.dr,o.dv)||BOTTLE;const d=findDish(o.c);
   return d&&d.img?`<img src="img/t/${d.img}.jpg" alt="" loading="lazy">`:BOTTLE};
 function renderPacks(){
   const t=T[L];
