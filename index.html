@@ -1255,7 +1255,7 @@ let BACK=false;
   if(Date.now()-r.t>2*36e5){BACK=r.n>0;r.n++;r.t=Date.now();store.set("sibisi.v",JSON.stringify(r))}
   else BACK=r.n>1;
 }catch(e){}})();
-(function(){let l=store.get("lang");
+(function(){let l=new URLSearchParams(location.search).get("l")||store.get("lang");
  if(!l){const n=(navigator.language||"es").slice(0,2);l=n==="zh"?"zh":(n==="es"||n==="ca")?"es":"en"}
  L=T[l]?l:"es";render()})();
 </script>
