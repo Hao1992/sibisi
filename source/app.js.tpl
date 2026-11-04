@@ -402,7 +402,9 @@ document.addEventListener("click",e=>{
   const ch=e.target.closest("[data-chop]");
   if(ch){e.preventDefault();CHOPOPEN=!CHOPOPEN;renderOrder();return}
   const sl=e.target.closest("[data-slip]");
-  if(sl){e.preventDefault();drawSlip();
+  if(sl){e.preventDefault();if(!canDraw())return;drawSlip();
+    clearTimeout(SLIPT);
+    SLIPT=setTimeout(()=>{if(!$("order").hidden)renderOrder();if(!$("staff").hidden)renderStaff()},SWIN+200);
     if(!$("order").hidden)renderOrder();
     if(!$("staff").hidden)renderStaff();
     const c=document.querySelector(".slipcard");if(c)c.scrollIntoView({block:"nearest",behavior:"smooth"});return}
@@ -628,6 +630,7 @@ function renderOrder(){
     :`<p class="ohint">${esc(ct.empty)}</p>`}
   </div>`;
   $("oclose").onclick=closeOrder;
+  initScratch();
   if(!ks.length)return;
   $("ostaff").onclick=openStaff;
   $("oclear").onclick=()=>{CART={};cartSave();syncCart()};
@@ -635,28 +638,85 @@ function renderOrder(){
     const done=()=>{b.textContent=CT[L].copied;setTimeout(()=>{if(!$("order").hidden)b.textContent=CT[L].copy},1500)};
     try{navigator.clipboard.writeText(orderText()).then(done,()=>{})}catch(_){}};
 }
-let SLIP=null;
+// 饭后签：一次来店只抽一张，六小时后算下一顿（只记在这台手机上）
+const SKEY="sibisi.slip",SWIN=60e3;   // 抽到的签一直留着，SWIN 只管多久能再抽一张
 const slipSeen=()=>store.get("sibisi.ordered")==="1";
-const slipDeck=()=>L==="zh"?SAYING:HANZI;        // 中文客人抽中国话，其他语言抽菜单上的汉字
+const slipDeck=()=>L==="zh"?SAYING:HANZI;   // 中文客人抽中国话，其他语言抽菜单上的汉字
+function slipGot(){
+  try{const r=JSON.parse(store.get(SKEY)||"null");if(r&&r.i!=null)return r}catch(e){}
+  return null}
+const canDraw=()=>{const g=slipGot();return !g||Date.now()-g.t>=SWIN};
+let SLIPT=null;
 function drawSlip(){
-  const deck=slipDeck();
-  let pool=deck;
-  if(SLIP&&deck.length>1)pool=deck.filter(x=>x.zh!==SLIP.zh&&x.c!==SLIP.c);
-  if(!pool.length)pool=deck;
-  SLIP=pool[Math.floor(Math.random()*pool.length)];}
+  const n=slipDeck().length,had=slipGot();
+  let i=Math.floor(Math.random()*n);
+  if(had&&n>1&&i===had.i)i=(i+1+Math.floor(Math.random()*(n-1)))%n;
+  store.set(SKEY,JSON.stringify({i:i,t:Date.now()}))}
+// 两副牌一样长，换语言时同一次抽到的是对应的那一张
 function slipCard(){
-  const t=T[L];
-  if(L==="zh"&&!SLIP.m)drawSlip();              // 换了语言就换一副牌
-  if(L!=="zh"&&!SLIP.c)drawSlip();
-  return SLIP.m
-    ?`<div class="slipcard say"><b>${esc(SLIP.zh)}</b><p>${esc(SLIP.m)}</p>
-       <div class="sayes"><dt>${esc(t.sayEs)}</dt>${esc(SLIP.es)}</div></div>`
-    :`<div class="slipcard"><b>${esc(SLIP.c)}</b><i>${esc(SLIP.py)}</i><p>${esc(SLIP[L])}</p></div>`}
+  const t=T[L],g=slipGot();if(!g)return "";
+  const deck=slipDeck(),x=deck[g.i%deck.length];
+  const inner=(x.m
+    ?`<div class="slipcard say"><b>${esc(x.zh)}</b><p>${esc(x.m)}</p>
+       <div class="sayes"><dt>${esc(t.sayEs)}</dt>${esc(x.es)}</div></div>`
+    :`<div class="slipcard"><b>${esc(x.c)}</b><i>${esc(x.py)}</i><p>${esc(x[L])}</p></div>`);
+  if(!g.rv)return `<div class="slipwrap">${inner}<canvas class="scratch"></canvas></div>`;
+  return inner
+    +(canDraw()?`<button class="chip more" type="button" data-slip="1">${esc(t.slipAgain)}</button>`
+               :`<small class="slipone">${esc(t.slipOnce)}</small>`)}
+// 刮刮卡：按住擦掉涂层，擦掉一半自动全开
+// 单子和店员页可能同时各有一张，全都要接上
+function initScratch(){document.querySelectorAll(".scratch:not([data-on])").forEach(setupScratch)}
+function setupScratch(c){
+  const wrap=c.parentNode,r=wrap.getBoundingClientRect(),w=Math.round(r.width),h=Math.round(r.height);
+  if(!w||!h){requestAnimationFrame(()=>setupScratch(c));return}
+  c.dataset.on="1";
+  const dpr=Math.min(devicePixelRatio||1,2);
+  c.width=w*dpr;c.height=h*dpr;c.style.width=w+"px";c.style.height=h+"px";
+  const x=c.getContext("2d");x.scale(dpr,dpr);
+  const g1=x.createLinearGradient(0,0,w,h);
+  g1.addColorStop(0,"#d4482f");g1.addColorStop(1,"#a8381f");
+  x.fillStyle=g1;x.fillRect(0,0,w,h);
+  x.strokeStyle="rgba(255,255,255,.10)";x.lineWidth=11;
+  for(let i=-h;i<w+h;i+=24){x.beginPath();x.moveTo(i,0);x.lineTo(i+h,h);x.stroke()}
+  x.fillStyle="rgba(255,255,255,.95)";x.textAlign="center";
+  x.font='800 15px '+getComputedStyle(document.body).fontFamily;
+  x.fillText(T[L].scratch,w/2,h/2+5);
+  x.globalCompositeOperation="destination-out";
+  x.fillStyle="#000";x.strokeStyle="#000";x.lineCap="round";x.lineJoin="round";
+  let down=false,last=null,n=0,done=false;
+  const at=e=>{const b=c.getBoundingClientRect();return [e.clientX-b.left,e.clientY-b.top]};
+  const blob=p=>{x.beginPath();x.arc(p[0],p[1],21,0,6.3);x.fill()};
+  const cleared=()=>{const d=x.getImageData(0,0,c.width,c.height).data;
+    let a=0,b=0;for(let i=3;i<d.length;i+=4*24){b++;if(d[i]<40)a++}return a/b};
+  const finish=()=>{if(done)return;done=true;
+    c.classList.add("gone");
+    const g=slipGot()||{};g.rv=1;store.set(SKEY,JSON.stringify(g));
+    setTimeout(()=>{if(!$("order").hidden)renderOrder();if(!$("staff").hidden)renderStaff()},420)};
+  c.addEventListener("pointerdown",e=>{down=true;last=at(e);blob(last);
+    try{c.setPointerCapture(e.pointerId)}catch(_){}
+    e.preventDefault()});
+  c.addEventListener("pointermove",e=>{if(!down)return;
+    const p=at(e);x.lineWidth=42;x.beginPath();x.moveTo(last[0],last[1]);x.lineTo(p[0],p[1]);x.stroke();
+    last=p;if(++n%8===0&&cleared()>.45)finish();
+    e.preventDefault()});
+  const up=()=>{if(!down)return;down=false;if(cleared()>.42)finish()};
+  c.addEventListener("pointerup",up);c.addEventListener("pointercancel",up);
+}
+const slipArt=()=>`<svg class="eggart" viewBox="0 0 56 56" fill="none" aria-hidden="true">
+ <g transform="rotate(-7 27 30)"><rect x="11" y="11" width="32" height="38" rx="3" fill="#f6ecd6" stroke="#b9a582" stroke-width="1.6"/>
+ <path d="M17 25h20M17 32h16M17 39h11" stroke="#c3ad87" stroke-width="1.7" stroke-linecap="round"/></g>
+ <g transform="rotate(9 42 15)"><rect x="34" y="7" width="17" height="17" rx="3" fill="#d4482f"/>
+ <rect x="38.5" y="11.5" width="8" height="8" rx="1" fill="none" stroke="#fff" stroke-width="1.7"/></g>
+ <path d="M7 9l1.6 3.8L12.4 14.4 8.6 16 7 19.8 5.4 16 1.6 14.4 5.4 12.8z" fill="#e8a33d"/>
+ <path d="M48 41l1.1 2.5 2.5 1.1-2.5 1.1L48 48.2l-1.1-2.5-2.5-1.1 2.5-1.1z" fill="#e8a33d"/></svg>`;
 function slipBlock(){
   if(!slipSeen())return "";
   const t=T[L];
-  return SLIP?`${slipCard()}<button class="chip more" type="button" data-slip="1">${esc(t.slipAgain)}</button>`
-            :`<button class="eggb" type="button" data-slip="1">${eggIcon("slip")}${esc(t.slipT)}</button>`}
+  return slipGot()?slipCard()
+    :`<button class="eggcard" type="button" data-slip="1">${slipArt()}
+       <span class="ect"><b>${esc(t.slipT)}</b><em>${esc(t.slipSub)}</em></span>
+       <span class="ecgo">›</span></button>`}
 function renderStaff(){
   // 中文给店员看，客人自己那门语言放小一号在下面，方便客人指着补充说明
   const sub=x=>L==="zh"?"":`<i class="sl">${esc(x.n2)}${x.o2?" · "+esc(x.o2):""}</i>`;
@@ -664,6 +724,7 @@ function renderStaff(){
    ${zhGroups().map(g=>`<h4 class="sg">${g.lab}</h4><ul>${g.rows.map(x=>`<li><span>${esc(x.n)}${x.o?`<em>${x.o}</em>`:""}${sub(x)}</span><b>×${x.q}</b></li>`).join("")}</ul>`).join("")}
    <div class="stot"><span>共 ${cCount()} 份</span><b>${eur(cTotal(),"es")}</b></div>
    <div class="sgift">${slipBlock()}</div>`;
+  initScratch();
   $("sclose").onclick=closeStaff;
 }
 const orderText=()=>["Sibisi Ramen"].concat(

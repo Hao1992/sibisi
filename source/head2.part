@@ -269,7 +269,16 @@ body.ordering .cartbar{display:none}
 .eggb{display:flex;align-items:center;gap:9px;width:100%;cursor:pointer;text-align:left;
   background:var(--chip);border:1.5px dashed var(--red);border-radius:14px;padding:12px 14px;color:var(--red);font:800 14px var(--f-body)}
 .eggi{flex:none;width:21px;height:21px}
-.egg .chip.more{justify-self:start}
+.eggcard{display:grid;grid-template-columns:52px 1fr auto;align-items:center;gap:12px;width:100%;cursor:pointer;text-align:left;
+  background:var(--chip);border:1.5px dashed var(--red);border-radius:16px;padding:13px 14px;color:var(--ink);font:inherit}
+.eggart{width:52px;height:52px;display:block}
+.ect b{display:block;font-size:15px;font-weight:800;color:var(--red)}
+.ect em{display:block;margin-top:2px;font-style:normal;font-size:12.5px;font-weight:700;color:var(--muted)}
+.ecgo{font-size:20px;font-weight:800;color:var(--red);opacity:.6}
+.slipone{display:block;color:var(--muted);font-size:12px;line-height:1.5}
+.slipwrap{position:relative;width:100%;user-select:none;-webkit-user-select:none}
+.scratch{position:absolute;inset:0;width:100%;height:100%;border-radius:14px;touch-action:none;cursor:crosshair;transition:opacity .4s ease}
+.scratch.gone{opacity:0;pointer-events:none}
 .chip.split{justify-self:start;border-style:dashed;border-color:var(--red);color:var(--red);font-size:12.5px;padding:7px 12px}
 .totop{position:fixed;right:14px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:6;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:800 20px var(--f-body);line-height:1;cursor:pointer;box-shadow:0 3px 14px rgba(0,0,0,.28);display:grid;place-items:center;padding:0}
 body.hascart .totop{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
@@ -331,6 +340,9 @@ body.detailing .totop,body.ordering .totop{display:none}
 .staff .slipcard i,.staff .slipcard p{color:#17140f}
 .staff .sayes{color:#6a635a;border-top-color:#ddd4bf}
 .staff .sayes dt{color:#d42320}
+.staff .eggcard{background:#fdf8ec;border-color:#d42320;color:#17140f}
+.staff .ect b,.staff .ecgo{color:#d42320}
+.staff .ect em,.staff .slipone{color:#6a635a}
 .staff .chip.more{background:#fdf8ec;border-color:#d42320;color:#d42320}
 @media (max-width:380px){.steps{grid-template-columns:1fr}.dish{grid-template-columns:60px 1fr auto}.thumb{width:60px;height:60px}}
 @media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
