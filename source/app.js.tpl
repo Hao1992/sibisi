@@ -208,15 +208,16 @@ function pairBox(d){
   const t=T[L],ct=CT[L],sc=p[0].replace("s",""),ss=p[0].endsWith("s")?"s":"";
   const recSide={k:ss?sc+"|"+ss:sc,c:sc,sz:ss};
   const recDr=[p[1][0],p[1][1]].map(k=>({k:DRKMAP[k]+"|"+k,dr:DRKMAP[k],dv:k}));
-  const cur=PICK[d.c]||(PICK[d.c]={sd:{[recSide.k]:{o:recSide,q:1}},dr:{}});   // 小菜默认跟推荐，饮料留空
+  const cur=PICK[d.c]||(PICK[d.c]={sd:{[recSide.k]:{o:recSide,q:1}},dr:{[recDr[0].k]:{o:recDr[0],q:1}}});   // 小菜和饮料都默认跟推荐，不要就点「不要饮料」
   const line=(kind,e)=>`<li><span>${esc(pickName(e.o))}</span><span>+${eur(pickPrice(e.o),L)}</span>
      <span class="qty has"><button class="qbtn" type="button" data-cq="${kind};${d.c};${e.o.k};-1" aria-label="−">−</button><span class="qn">${e.q}</span><button class="qbtn add" type="button" data-cq="${kind};${d.c};${e.o.k};1" aria-label="＋">＋</button></span></li>`;
   const quick=(kind,o)=>cur[kind][o.k]?"":`<button class="chip" type="button" data-cq="${kind};${d.c};${o.k};1">${esc(pickName(o))} +${eur(pickPrice(o),L)}</button>`;
   const group=(kind,label,recs)=>{
     const es=Object.values(cur[kind]);
+    const none=kind==="dr"&&es.length?`<button class="chip none" type="button" data-cq="dr;${d.c};!;0">${esc(ct.noDrink)}</button>`:"";
     return `<div class="grp"><span class="qlab">${esc(label)}</span>
       ${es.length?`<ul class="glist">${es.map(e=>line(kind,e)).join("")}</ul>`:""}
-      <div class="opt">${recs.map(o=>quick(kind,o)).join("")}<button class="chip more" type="button" data-more="${kind}|${d.c}">${esc(kind==="sd"?ct.otherSide:ct.otherDrink)}</button></div></div>`};
+      <div class="opt">${recs.map(o=>quick(kind,o)).join("")}<button class="chip more" type="button" data-more="${kind}|${d.c}">${esc(kind==="sd"?ct.otherSide:ct.otherDrink)}</button>${none}</div></div>`};
   const sum=k=>Object.values(cur[k]).reduce((n,e)=>n+e.q*pickPrice(e.o),0);
   const tot=d.p+sum("sd")+sum("dr");
   return `<div class="pair"><dt>${t.pairT}</dt><p>${esc(p[3+LI[L]])}</p>
@@ -235,6 +236,10 @@ function bumpPick(kind,c,k,n){
     if(!$("pick").hidden)pickCounts(kind,c);
     return}
   const cur=PICK[c]||(PICK[c]={sd:{},dr:{}});
+  if(k==="!"){cur[kind]={};
+    if($("detpair"))$("detpair").innerHTML=pairBox(findDish(c));
+    if(!$("pick").hidden)pickCounts(kind,c);
+    return}
   const e=cur[kind][k]||(cur[kind][k]={o:optByKey(kind,k),q:0});
   e.q=Math.max(0,Math.min(20,e.q+n));
   if(!e.q)delete cur[kind][k];
