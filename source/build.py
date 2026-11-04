@@ -7,7 +7,7 @@ from det import DET
 rd = lambda f: open(os.path.join(HERE, f), encoding="utf-8").read()
 js = rd("app.js.tpl")
 J = lambda o: json.dumps(o, ensure_ascii=False)
-for k, v in dict(T=T, LBL=LBL, ALGN=ALGN, TASTE=TASTE, S=S, FIRST=FIRST, EXTRAS=EXTRAS, DR=DR, SIDE=SIDE, DRK=DRK, PR=PR, DET=DET, SP=SP, CT=CT, CORI=CORI, DRKMAP=DRKMAP, UPSELL=UPSELL, TEL=TEL, MAP=MAP, REV=REV, TOP=TOP, FRONT=FRONT, GRP=GRP, COMBO=COMBO, JQ=JQ, JQW=JQW, HANZI=HANZI, SAYING=SAYING, CHOP=CHOP, HOURS=HOURS, DRILL=DRILL, DRILLV=DRILLV).items():
+for k, v in dict(T=T, LBL=LBL, ALGN=ALGN, TASTE=TASTE, S=S, FIRST=FIRST, EXTRAS=EXTRAS, DR=DR, SIDE=SIDE, DRK=DRK, PR=PR, DET=DET, SP=SP, CT=CT, CORI=CORI, DRKMAP=DRKMAP, UPSELL=UPSELL, TEL=TEL, MAP=MAP, REV=REV, TOP=TOP, FRONT=FRONT, GRP=GRP, COMBO=COMBO, JQ=JQ, JQW=JQW, HANZI=HANZI, SAYING=SAYING, CHOP=CHOP, HOURS=HOURS, DRILL=DRILL, DRILLV=DRILLV, BRAND=BRAND, BYURL=BYURL).items():
     js = js.replace("__%s__" % k, J(v))
 js = js.replace("__ILLO__", rd("illo.part"))
 head = rd("head2.part").replace(".alab{", ".algbox{display:grid;gap:4px}\n.algbox dt{font-size:12px;font-weight:800;letter-spacing:.08em;color:var(--red)}\n.alab{", 1)

@@ -16,6 +16,8 @@ const CORI=__CORI__;
 const DRKMAP=__DRKMAP__;
 const UPSELL=__UPSELL__;
 const TEL=__TEL__;
+const BRAND=__BRAND__;
+const BYURL=__BYURL__;
 const HOURS=__HOURS__;
 const DRILL=__DRILL__;
 const DRILLV=__DRILLV__;
@@ -295,6 +297,7 @@ function render(){
   $("f-dirs").textContent=t.dirs; $("f-dirs").href=MAP;
   $("f-rev").textContent=t.rev;   $("f-rev").href=REV;
   $("f-all").innerHTML=algRow("G H S Sé P M",true)+`<div style="margin-top:6px">${esc(t.all)}</div>`;
+  $("f-by").href=BYURL;$("f-by").innerHTML=esc(t.by).replace("%s",`<b>${esc(BRAND)}</b>`)+" ›";
   document.querySelectorAll(".lang button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.l===L));
   const secName=s=>L==="zh"?s.zh:s[L];
   renderFil();
