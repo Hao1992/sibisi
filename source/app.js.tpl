@@ -16,6 +16,7 @@ const CORI=__CORI__;
 const DRKMAP=__DRKMAP__;
 const UPSELL=__UPSELL__;
 const TEL=__TEL__;
+const HOURS=__HOURS__;
 const MAP=__MAP__;
 const REV=__REV__;
 const TOP=__TOP__;
@@ -55,7 +56,8 @@ const FILD=[
  {id:"nh", lab:l=>T[l].fNo, ok:d=>!fls(d).includes("h")},
  {id:"H",  lab:l=>woLab("H",l),  ok:d=>!als(d).includes("H")},
  {id:"Se", lab:l=>woLab("Sé",l), ok:d=>!als(d).includes("Sé")},
- {id:"M",  lab:l=>woLab("M",l),  ok:d=>!als(d).includes("M")}];
+ {id:"M",  lab:l=>woLab("M",l),  ok:d=>!als(d).includes("M")},
+ {id:"np", lab:l=>T[l].fNoPork,  ok:d=>!fls(d).includes("p")}];
 let FIL=[];
 const dishOk=d=>FIL.every(id=>FILD.find(f=>f.id===id).ok(d));
 // 节气图标：一笔一画的小符号，说明这个节气是什么意思
@@ -171,7 +173,7 @@ function renderLuck(){
      <span class="lbp">${esc(q[3])}${L==="zh"?"":" · "+esc(L==="es"?q[4]:q[5])}</span></div>
     ${LUCK.fb?"":`<p>${esc(JQW[q[6]][LI[L]])}</p>`}
     <div class="lrow">
-      <div class="thumb">${d.img?`<img src="img/${d.img}.jpg" alt="" loading="lazy">`:illo(d.c,"")}<span class="badge">${d.c}</span></div>
+      <div class="thumb">${d.img?`<img src="img/t/${d.img}.jpg" alt="" loading="lazy">`:illo(d.c,"")}<span class="badge">${d.c}</span></div>
       <div class="lt"><h4>${esc(L==="zh"?d.zh:d[L])}</h4>${DET[d.c]?`<button class="llink" type="button" data-det="${d.c}">${esc(t.seeIt)}</button>`:""}</div>
       <div class="lr"><b>${eur(d.p,L)}</b>${stepper(d.c,`data-c="${d.c}"`)}</div></div>
     <button class="chip more" type="button" id="lagain">${esc(t.luckAgain)}</button>`;
@@ -276,7 +278,7 @@ function render(){
   $("steps").innerHTML=t.steps.map(s=>`<li>${esc(s)}</li>`).join("");
   $("first-t").textContent=t.firstT;
   $("first").innerHTML=FIRST.map(f=>{const d=findDish(f.c),det=DET[f.c]?` data-det="${f.c}" tabindex="0" role="button"`:"";
-    return `<li${det}><div class="thumb">${d.img?`<img src="img/${d.img}.jpg" alt="" loading="lazy">`:illo(d.c,"")}<span class="badge">${d.c}</span></div>
+    return `<li${det}><div class="thumb">${d.img?`<img src="img/t/${d.img}.jpg" alt="" loading="lazy">`:illo(d.c,"")}<span class="badge">${d.c}</span></div>
       <div class="ft"><h4>${esc(L==="zh"?d.zh:d[L])}</h4><em>${esc(f[L])}</em></div>
       <div class="fr"><b>${eur(d.p,L)}</b>${stepper(d.c,`data-c="${d.c}"`)}</div></li>`}).join("");
   $("herobuy").innerHTML=`<span class="qlab">1-1 ${esc(L==="zh"?findDish("1-1").zh:findDish("1-1")[L])}</span>${stepper("1-1",'data-c="1-1"')}`;
@@ -285,6 +287,9 @@ function render(){
   $("f-take").textContent=t.take; $("copy").textContent=t.copy;
   $("phone").href="tel:"+TEL;
   $("totop").setAttribute("aria-label",CT[L].toTop);
+  $("f-hrs-t").textContent=t.hrsT;
+  const wd=new Date().getDay();
+  $("f-hrs").innerHTML=HOURS.map(g=>`<div class="hr${g.d.includes(wd)?" now":""}"><span>${esc(g[L])}</span><span>${esc(g.h[L])}</span></div>`).join("");
   $("f-dirs").textContent=t.dirs; $("f-dirs").href=MAP;
   $("f-rev").textContent=t.rev;   $("f-rev").href=REV;
   $("f-all").innerHTML=algRow("G H S Sé P M",true)+`<div style="margin-top:6px">${esc(t.all)}</div>`;
@@ -312,10 +317,10 @@ function render(){
         ?`<div class="qty2"><span class="qlab">${SZ[L].s}</span>${stepper(d.c+"|s",`data-c="${d.c}" data-sz="s"`)}</div>
            <div class="qty2"><span class="qlab">${SZ[L].l}</span>${stepper(d.c+"|l",`data-c="${d.c}" data-sz="l"`)}</div>`
         :stepper(d.c,`data-c="${d.c}"`);
-      const price=d.p2?`<span class="pz">${L==="zh"?"小":L==="en"?"S":"P"}</span> ${eur(d.p,L)}<br><span class="pz">${L==="zh"?"大":L==="en"?"L":"G"}</span> ${eur(d.p2,L)}`:eur(d.p,L);
-      h+=`<div class="dish" id="d-${d.c}"${det}><div class="thumb">${d.img?`<img src="img/${d.img}.jpg" alt="" loading="lazy">`:illo(d.c,"")}<span class="badge">${d.c}</span></div>
+      const price=d.p2?`<span class="pz">${SZ[L].s}</span>${eur(d.p,L)}<span class="pz">${SZ[L].l}</span>${eur(d.p2,L)}`:eur(d.p,L);
+      h+=`<div class="dish" id="d-${d.c}"${det}><div class="thumb">${d.img?`<img src="img/t/${d.img}.jpg" alt="" loading="lazy">`:illo(d.c,"")}<span class="badge">${d.c}</span></div>
         <div class="t"><h4>${esc(name)}</h4><div class="zhn">${esc(sub)}</div>${desc?`<p>${esc(desc)}</p>`:""}${taste?`<div class="taste">${taste}</div>`:""}${tags?`<div class="tags">${tags}</div>`:""}${algRow(d.al,true)}${pairLine(d)}${DET[d.c]?`<span class="more">${t.more}</span>`:""}<div class="qwrap">${qty}</div></div>
-        <div class="price">${price}</div></div>`;
+        <div class="price${d.p2?" two":""}">${price}</div></div>`;
     }
     h+=`</div>`;
     if(s.id==="hm")h+=`<div class="extras"><b>${t.extras}</b><ul>${EXTRAS.map(e=>`<li><span>${esc(nm(e[0]))}</span><span>+${eur(e[1],L)}</span></li>`).join("")}</ul></div>`;
@@ -333,6 +338,10 @@ const packOpt=k=>k.indexOf("dr-")===0
   ?{k:k,dr:k.split("|")[0],dv:k.split("|")[1]||""}
   :{k:k,c:k.split("|")[0],sz:k.split("|")[1]||""};
 const packTotal=p=>p.items.reduce((n,[k,q])=>n+q*pickPrice(packOpt(k)),0);
+// 套餐里每一行的小图：菜用实拍缩略图，酒水用一个瓶子符号
+const BOTTLE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2h4v3.5l2 3V21a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V8.5l2-3z"/><path d="M8 13h8"/></svg>';
+const packThumb=o=>{if(o.dr)return BOTTLE;const d=findDish(o.c);
+  return d&&d.img?`<img src="img/t/${d.img}.jpg" alt="" loading="lazy">`:BOTTLE};
 function renderPacks(){
   const t=T[L];
   $("packs").innerHTML=`<b>${esc(t.packT)}</b>`+COMBO.map(p=>{
@@ -340,7 +349,8 @@ function renderPacks(){
     return `<div class="pk"><div class="pkh"><b>${esc(p[L])}</b></div>
       <p>${esc(p[L+"2"])}</p>
       <ul>${p.items.map(([k,q])=>{const o=packOpt(k);
-        return `<li><span>${esc(pickName(o))}</span><span>×${q}</span></li>`}).join("")}</ul>
+        return `<li><span class="pth">${packThumb(o)}</span><span class="pn">${esc(pickName(o))}</span><span>×${q}</span></li>`}).join("")}</ul>
+      <p class="pksame">${esc(t.packSame)}</p>
       <div class="pkf"><div class="pkp"><b>${eur(tot,L)}</b><em>${esc(t.packEach.replace("%s",eur(tot/p.n,L)))}</em></div>
         <button class="obtn" type="button" data-pack="${p.id}">${esc(t.packAdd)}</button></div></div>`}).join("")
     +`<small>${esc(t.packNote)}</small>`;
@@ -449,7 +459,7 @@ function spy(){
   document.querySelectorAll("main section").forEach(s=>obs.observe(s));
 }
 /* ---------- 点单（购物车）：状态在本机，不发给任何服务器 ---------- */
-const SZ={zh:{s:"小",l:"大"},es:{s:"P",l:"G"},en:{s:"S",l:"L"}};
+const SZ={zh:{s:"小",l:"大"},es:{s:"pequeña",l:"grande"},en:{s:"small",l:"large"}};
 const DRINK={};
 for(const g of ["beers","wine","soft","water"])DR[g].forEach((x,i)=>{DRINK["dr-"+g+"-"+i]=x});
 const drName=(x,l)=>typeof x[0]==="string"?x[0]:x[0][LI[l]];
@@ -586,7 +596,7 @@ function syncCart(){
   document.querySelectorAll("[data-opt]").forEach(b=>{const[kind,k,i]=b.dataset.opt.split("|");const o=OPT[k]||{};
     b.setAttribute("aria-pressed",kind==="sp"?(o.sp||0)===+i:kind==="nc"?!!o.nc:exList(k).includes(+i))});
   $("cartbar").hidden=!n;document.body.classList.toggle("hascart",!!n);
-  if(n){$("cb-n").textContent=ct.items.replace("%s",n);$("cb-t").textContent=eur(cTotal(),L);$("cb-go").textContent=ct.view}
+  if(n){$("cb-n").textContent=n===1&&ct.item1?ct.item1:ct.items.replace("%s",n);$("cb-t").textContent=eur(cTotal(),L);$("cb-go").textContent=ct.view}
   if(!$("sheet").hidden&&DETC&&$("detbuy")){$("detbuy").innerHTML=buyBlock(DETC);
     if($("detpair"))$("detpair").innerHTML=pairBox(findDish(DETC))}
   if(!$("order").hidden)renderOrder();

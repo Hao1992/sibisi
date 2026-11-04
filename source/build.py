@@ -7,7 +7,7 @@ from det import DET
 rd = lambda f: open(os.path.join(HERE, f), encoding="utf-8").read()
 js = rd("app.js.tpl")
 J = lambda o: json.dumps(o, ensure_ascii=False)
-for k, v in dict(T=T, LBL=LBL, ALGN=ALGN, TASTE=TASTE, S=S, FIRST=FIRST, EXTRAS=EXTRAS, DR=DR, SIDE=SIDE, DRK=DRK, PR=PR, DET=DET, SP=SP, CT=CT, CORI=CORI, DRKMAP=DRKMAP, UPSELL=UPSELL, TEL=TEL, MAP=MAP, REV=REV, TOP=TOP, FRONT=FRONT, GRP=GRP, COMBO=COMBO, JQ=JQ, JQW=JQW, HANZI=HANZI, SAYING=SAYING, CHOP=CHOP).items():
+for k, v in dict(T=T, LBL=LBL, ALGN=ALGN, TASTE=TASTE, S=S, FIRST=FIRST, EXTRAS=EXTRAS, DR=DR, SIDE=SIDE, DRK=DRK, PR=PR, DET=DET, SP=SP, CT=CT, CORI=CORI, DRKMAP=DRKMAP, UPSELL=UPSELL, TEL=TEL, MAP=MAP, REV=REV, TOP=TOP, FRONT=FRONT, GRP=GRP, COMBO=COMBO, JQ=JQ, JQW=JQW, HANZI=HANZI, SAYING=SAYING, CHOP=CHOP, HOURS=HOURS).items():
     js = js.replace("__%s__" % k, J(v))
 js = js.replace("__ILLO__", rd("illo.part"))
 head = rd("head2.part").replace(".alab{", ".algbox{display:grid;gap:4px}\n.algbox dt{font-size:12px;font-weight:800;letter-spacing:.08em;color:var(--red)}\n.alab{", 1)
@@ -39,5 +39,8 @@ doc = """<!doctype html>
 out = os.path.join(HERE, "..", "index.html")
 open(out, "w", encoding="utf-8").write(doc)
 # sanity: every img referenced exists
-missing = [m for m in set(re.findall(r'"img": "([\w-]+)"', doc)) if not os.path.exists(os.path.join(HERE, "..", "img", m + ".jpg"))]
-print("built index.html", "| missing images:", missing or "none")
+names = set(re.findall(r'"img": "([\w-]+)"', doc))
+missing = [m for m in names if not os.path.exists(os.path.join(HERE, "..", "img", m + ".jpg"))]
+# 列表用 img/t/ 下的 192px 缩略图，详情页用原图：两边都得在
+nothumb = [m for m in names if not os.path.exists(os.path.join(HERE, "..", "img", "t", m + ".jpg"))]
+print("built index.html", "| missing images:", missing or "none", "| missing thumbs:", nothumb or "none")

@@ -30,7 +30,7 @@ body{color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.5;m
 .brand h1{font-family:var(--f-display);font-weight:400;font-size:29px;line-height:1;margin:0;color:var(--red);letter-spacing:.5px}
 .brand p{margin:3px 0 0;font-size:14.5px;font-weight:600}
 .lang{display:flex;background:rgba(0,0,0,.08);border-radius:999px;padding:3px}
-.lang button{border:0;background:none;font:800 13.5px var(--f-body);color:var(--yellow-ink);padding:6px 9px;border-radius:999px;cursor:pointer}
+.lang button{border:0;background:none;font:800 13.5px var(--f-body);color:var(--yellow-ink);min-height:44px;padding:0 10px;border-radius:999px;cursor:pointer}
 .lang button[aria-pressed="true"]{background:#fff;color:var(--red)}
 .lang button:focus-visible,.rail a:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 
@@ -69,6 +69,8 @@ section{scroll-margin-top:64px;padding-top:22px}
 .tt.hotx{color:var(--red);border-color:var(--red-soft);background:var(--red-soft)}
 .price{text-align:right;line-height:1.5}
 .pz{font-size:12.5px;font-weight:700;color:var(--muted)}
+.price.two{white-space:normal;font-size:16.5px}
+.price.two .pz{display:block;font-size:12.5px;line-height:1.3;font-weight:800}
 .pairl{margin-top:6px;font-size:14px;font-weight:600;color:var(--muted);border:1px dashed var(--line);border-radius:10px;padding:5px 9px;width:fit-content;max-width:100%}
 .pairl b{color:var(--ink);font-weight:800}
 .pairl .plus{color:var(--red);font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
@@ -79,7 +81,7 @@ section{scroll-margin-top:64px;padding-top:22px}
 .pair li{display:flex;justify-content:space-between;align-items:center;gap:10px;font-variant-numeric:tabular-nums}
 .pair li span:first-child{flex:1;min-width:0}
 .pair li .qty{flex:none}
-.pair .qbtn{width:28px;height:28px;font-size:17px}
+.pair .qbtn{width:40px;height:40px;font-size:19px}
 .obtn.combo{width:100%;margin-top:2px;padding:13px;font-size:17px}
 .pairtot{display:flex;justify-content:space-between;align-items:baseline;border-top:1px dashed var(--line);padding-top:8px;margin-top:2px;font-weight:800}
 .pairtot b{color:var(--red);font-size:21.5px;font-variant-numeric:tabular-nums}
@@ -142,9 +144,13 @@ section{scroll-margin-top:64px;padding-top:22px}
 .drinks{display:grid;gap:14px;margin-top:8px}
 .drinks h5{margin:0 0 4px;font-size:14.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .drinks ul{list-style:none;margin:0;padding:0}
-.drinks li{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dotted var(--line);font-variant-numeric:tabular-nums}
+.drinks li{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px dotted var(--line);font-variant-numeric:tabular-nums}
+.drinks li>span:first-child{flex:1;min-width:0}
 .foot{margin-top:28px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;display:grid;gap:10px;font-size:15.5px}
 .foot .row{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.foot .hrs{display:grid;gap:3px;margin-top:3px;width:100%}
+.foot .hrs .hr{display:flex;justify-content:space-between;gap:12px;color:var(--muted)}
+.foot .hrs .hr.now{color:var(--ink);font-weight:800}
 .foot .phone{font-weight:800;font-size:20px;user-select:all;font-variant-numeric:tabular-nums}
 .copy{border:1px solid var(--line);background:var(--chip);color:var(--ink);font:700 14.5px var(--f-body);border-radius:999px;padding:6px 12px;cursor:pointer}
 .legend{color:var(--muted);font-size:14px}
@@ -161,7 +167,12 @@ section{scroll-margin-top:64px;padding-top:22px}
 .pkh b{font-size:17px}
 .pk p{margin:0;font-size:14.5px;color:var(--muted);line-height:1.45}
 .pk ul{list-style:none;margin:0;padding:0;display:grid;gap:3px;font-size:15px}
-.pk li{display:flex;justify-content:space-between;gap:10px;font-variant-numeric:tabular-nums}
+.pk li{display:flex;align-items:center;justify-content:space-between;gap:9px;font-variant-numeric:tabular-nums}
+.pk li .pth{width:40px;height:40px;border-radius:9px;overflow:hidden;background:var(--chip);flex:none;display:grid;place-items:center}
+.pk li .pth img{width:100%;height:100%;object-fit:cover}
+.pk li .pth svg{width:20px;height:20px;color:var(--muted)}
+.pk li .pn{flex:1;min-width:0}
+.pk .pksame{margin:0;font-size:14px;color:var(--green);font-weight:700;line-height:1.4}
 .pk li span:last-child{color:var(--muted);font-weight:700}
 .pkf{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:2px}
 .pkp b{font-size:21.5px;font-variant-numeric:tabular-nums}
@@ -176,8 +187,8 @@ section{scroll-margin-top:64px;padding-top:22px}
 /* --- 点单：卡片上的加减、底部浮条、订单页、店员大字页 --- */
 .qty{display:inline-flex;align-items:center;justify-content:flex-end;gap:6px}
 .qwrap{display:flex;flex-direction:column;align-items:flex-end;gap:5px;margin-top:9px}
-.drinks .qty{min-width:92px}
-.qbtn{width:32px;height:32px;border-radius:50%;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font:800 19px var(--f-body);line-height:1;cursor:pointer;display:grid;place-items:center;padding:0}
+.drinks .qty{min-width:106px}
+.qbtn{width:44px;height:44px;border-radius:50%;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font:800 21px var(--f-body);line-height:1;cursor:pointer;display:grid;place-items:center;padding:0}
 .qbtn.add{background:var(--red);border-color:var(--red);color:#fff}
 .qbtn:disabled{opacity:.3;cursor:default}
 .qn{min-width:18px;text-align:center;font-weight:800;font-variant-numeric:tabular-nums}
@@ -230,7 +241,7 @@ section{scroll-margin-top:64px;padding-top:22px}
 .chip{border:1px solid var(--line);background:var(--surface);color:var(--muted);font:700 13px var(--f-body);border-radius:999px;padding:4px 9px;cursor:pointer}
 .chip[aria-pressed="true"]{background:var(--red);border-color:var(--red);color:#fff}
 .dish.picked{background:linear-gradient(90deg,var(--chip),transparent 60%)}
-.drinks .dr-r{display:flex;align-items:center;gap:10px;font-variant-numeric:tabular-nums}
+.drinks .dr-r{display:flex;align-items:center;gap:10px;flex:none;white-space:nowrap;font-variant-numeric:tabular-nums}
 .fly{position:fixed;z-index:40;width:38px;height:38px;border-radius:50%;background:var(--red) center/cover no-repeat;box-shadow:0 4px 14px rgba(0,0,0,.35);pointer-events:none;transition:transform .55s cubic-bezier(.35,.1,.45,1),opacity .55s ease-in}
 .cartbar.pop{animation:cartpop .34s ease}
 @keyframes cartpop{0%{transform:scale(1)}35%{transform:scale(1.05)}100%{transform:scale(1)}}
@@ -326,7 +337,7 @@ body.detailing .totop,body.ordering .totop{display:none}
 .glist{list-style:none;margin:0;padding:0;display:grid;gap:2px}
 .glist li{display:flex;justify-content:space-between;align-items:center;gap:10px;font-variant-numeric:tabular-nums;padding:3px 0}
 .glist li span:first-child{flex:1;min-width:0}
-.glist .qbtn{width:28px;height:28px;font-size:17px}
+.glist .qbtn{width:40px;height:40px;font-size:19px}
 .staff{position:fixed;inset:0;z-index:30;background:#fff;color:#17140f;overflow-y:auto;padding:14px 18px calc(24px + env(safe-area-inset-bottom,0px));font-family:var(--f-zh)}
 .staff .sx{display:flex;justify-content:space-between;align-items:center;gap:10px;font-family:var(--f-body)}
 .staff .sx span{font-size:14px;font-weight:700;color:#8b8172}
@@ -374,13 +385,14 @@ body.detailing .totop,body.ordering .totop{display:none}
     </div>
   </article>
 
+  <nav class="rail" id="rail"></nav>
+
   <div class="promise" id="promise"></div>
   <ol class="steps" id="steps"></ol>
   <div class="lask" id="luck"></div>
   <div class="first"><b id="first-t"></b><ul id="first"></ul></div>
   <div class="packs" id="packs"></div>
 
-  <nav class="rail" id="rail"></nav>
   <div class="fbar" id="filters"></div>
   <main id="menu"></main>
   <div class="scrim" id="scrim" hidden></div>
@@ -396,6 +408,7 @@ body.detailing .totop,body.ordering .totop{display:none}
 
   <footer class="foot">
     <div class="row"><div><div class="legend" id="f-take"></div><a class="phone" id="phone" href="tel:+34671343226">671 343 226</a></div><button class="copy" id="copy"></button></div>
+    <div class="row"><div class="legend" id="f-hrs-t"></div><div class="hrs" id="f-hrs"></div></div>
     <div class="row"><div>C/ de Julio Antonio, 24 · 46007 València</div><a class="flink" id="f-dirs" target="_blank" rel="noopener"></a></div>
     <div class="row"><a class="flink" id="f-rev" target="_blank" rel="noopener"></a></div>
     <div class="legend" id="f-all"></div>
