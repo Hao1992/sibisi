@@ -461,6 +461,7 @@ const UPSELL=["6-5|s", "2-11", "6-4", "6-1"];
 const TEL="+34671343226";
 const BRAND="Carta Viva";
 const BYURL="https://hao1992.github.io/cartaviva/";
+const STATS="";
 const HOURS=[{"d": [1, 2, 3], "zh": "周一至周三", "es": "Lun–Mié", "en": "Mon–Wed", "h": {"zh": "12:30–16:30", "es": "12:30–16:30", "en": "12:30–16:30"}}, {"d": [4], "zh": "周四", "es": "Jueves", "en": "Thursday", "h": {"zh": "休息", "es": "Cerrado", "en": "Closed"}}, {"d": [5, 6, 0], "zh": "周五至周日", "es": "Vie–Dom", "en": "Fri–Sun", "h": {"zh": "12:30–16:30 · 20:00–23:00", "es": "12:30–16:30 · 20:00–23:00", "en": "12:30–16:30 · 20:00–23:00"}}];
 const DRILL={"dr-beers-0": ["bot", "#2f6b35", "#c8352b"], "dr-beers-1": ["bot", "#2f6b35", "#e8b62c"], "dr-beers-2": ["bot", "#17683c", "#f1ece0"], "dr-beers-3": ["bot", "#2f6b35", "#1d4f8f"], "dr-beers-4": ["bot", "#8a4a1c", "#c8352b"], "dr-wine-0": ["glass", "#e4ce63", ""], "dr-wine-1": ["glass", "#8e2340", ""], "dr-wine-2": ["wbot", "#23402a", "#e8ded0"], "dr-soft-0": ["can", "#c8352b", "#f1ece0"], "dr-soft-1": ["can", "#e8742a", "#f1ece0"], "dr-soft-2": ["can", "#d9a441", "#8a4a1c"], "dr-soft-3": ["can", "#3f86c4", "#f1ece0"], "dr-soft-4": ["pet", "#4f9a4a", "#f1ece0"], "dr-soft-5": ["pet", "#7a4a24", "#f1ece0"], "dr-soft-6": ["can", "#cf2a22", "#e8b62c"], "dr-water-0": ["pet", "#9fc9e0", "#2f6b9a"]};
 const DRILLV={"ccz": ["can", "#1d1d1d", "#c8352b"]};
@@ -952,7 +953,7 @@ document.addEventListener("keydown",e=>{
   if(r&&(e.key==="Enter"||e.key===" ")){e.preventDefault();openDet(r.dataset.det)}
 });
 function setLang(l){L=l;store.set("lang",l);render()}
-document.querySelectorAll(".lang button").forEach(b=>b.addEventListener("click",()=>setLang(b.dataset.l)));
+document.querySelectorAll(".lang button").forEach(b=>b.addEventListener("click",()=>{ev("lang",b.dataset.l);setLang(b.dataset.l)}));
 $("copy").addEventListener("click",e=>{
   const b=e.currentTarget;const sel=()=>getSelection().selectAllChildren($("phone"));
   const done=()=>{b.textContent=T[L].copied;setTimeout(()=>b.textContent=T[L].copy,1500)};
@@ -1256,13 +1257,29 @@ function openOrder(){renderOrder();$("order").hidden=false;$("scrim").hidden=fal
   document.body.classList.add("ordering");document.body.style.overflow="hidden"}
 function closeOrder(){$("order").hidden=true;$("scrim").hidden=true;
   document.body.classList.remove("ordering");document.body.style.overflow=""}
-function openStaff(){store.set("sibisi.ordered","1");renderStaff();$("staff").hidden=false;document.body.style.overflow="hidden"}
+function openStaff(){ev("staff");store.set("sibisi.ordered","1");renderStaff();$("staff").hidden=false;document.body.style.overflow="hidden"}
 function closeStaff(){$("staff").hidden=true;document.body.style.overflow=$("order").hidden?"":"hidden";
   if(!$("order").hidden)renderOrder()}   // 点过店员页之后，饭后签才会出现，得重画一次
 $("cb-go").addEventListener("click",openOrder);
 $("totop").addEventListener("click",()=>scrollTo({top:0,behavior:"smooth"}));
 const topBtn=()=>{$("totop").hidden=scrollY<700};
 addEventListener("scroll",topBtn,{passive:true});topBtn();
+// --- 统计 ---------------------------------------------------------------
+// 会话 id 只在内存里，页面一关就没了：不写 cookie 也不写 localStorage，
+// 所以不需要 cookie 横幅。STATS 为空时一个请求都不会发。
+const SID=(()=>{try{return crypto.randomUUID()}catch(e){return Date.now().toString(36)+Math.random().toString(36).slice(2)}})();
+const TRACK=!!STATS&&navigator.doNotTrack!=="1"&&!navigator.globalPrivacyControl;
+const EVQ=[];
+function ev(n,v){if(!TRACK)return;EVQ.push([n,v==null?null:String(v).slice(0,40)]);if(EVQ.length>=40)evFlush()}
+function evFlush(){
+  if(!TRACK||!EVQ.length)return;
+  // text/plain 不触发 CORS 预检，省一个往返；sendBeacon 保证切后台也发得出去
+  const b=JSON.stringify({s:SID,w:innerWidth,e:EVQ.splice(0,EVQ.length)});
+  try{navigator.sendBeacon(STATS,new Blob([b],{type:"text/plain"}))}catch(e){}
+}
+addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")evFlush()});
+addEventListener("pagehide",evFlush);
+
 // 来过的人打开菜单时换一句招呼（只存在这台手机上）
 let BACK=false;
 (function(){try{
@@ -1272,7 +1289,7 @@ let BACK=false;
 }catch(e){}})();
 (function(){let l=new URLSearchParams(location.search).get("l")||store.get("lang");
  if(!l){const n=(navigator.language||"es").slice(0,2);l=n==="zh"?"zh":(n==="es"||n==="ca")?"es":"en"}
- L=T[l]?l:"es";render()})();
+ L=T[l]?l:"es";render();ev("open",L)})();
 </script>
 </body>
 </html>

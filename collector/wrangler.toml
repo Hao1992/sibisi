@@ -1,0 +1,13 @@
+name = "sibisi-stats"
+main = "worker.js"
+compatibility_date = "2025-10-01"
+
+# wrangler d1 create sibisi 之后，把它打印出来的 database_id 填到下面
+[[d1_databases]]
+binding = "DB"
+database_name = "sibisi"
+database_id = "PON_AQUI_EL_ID"
+
+[vars]
+# 允许上报的来源。菜单换域名的话这里要跟着改
+ORIGIN = "https://hao1992.github.io"

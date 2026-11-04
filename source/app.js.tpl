@@ -18,6 +18,7 @@ const UPSELL=__UPSELL__;
 const TEL=__TEL__;
 const BRAND=__BRAND__;
 const BYURL=__BYURL__;
+const STATS=__STATS__;
 const HOURS=__HOURS__;
 const DRILL=__DRILL__;
 const DRILLV=__DRILLV__;
@@ -451,7 +452,7 @@ document.addEventListener("keydown",e=>{
   if(r&&(e.key==="Enter"||e.key===" ")){e.preventDefault();openDet(r.dataset.det)}
 });
 function setLang(l){L=l;store.set("lang",l);render()}
-document.querySelectorAll(".lang button").forEach(b=>b.addEventListener("click",()=>setLang(b.dataset.l)));
+document.querySelectorAll(".lang button").forEach(b=>b.addEventListener("click",()=>{ev("lang",b.dataset.l);setLang(b.dataset.l)}));
 $("copy").addEventListener("click",e=>{
   const b=e.currentTarget;const sel=()=>getSelection().selectAllChildren($("phone"));
   const done=()=>{b.textContent=T[L].copied;setTimeout(()=>b.textContent=T[L].copy,1500)};
@@ -755,13 +756,29 @@ function openOrder(){renderOrder();$("order").hidden=false;$("scrim").hidden=fal
   document.body.classList.add("ordering");document.body.style.overflow="hidden"}
 function closeOrder(){$("order").hidden=true;$("scrim").hidden=true;
   document.body.classList.remove("ordering");document.body.style.overflow=""}
-function openStaff(){store.set("sibisi.ordered","1");renderStaff();$("staff").hidden=false;document.body.style.overflow="hidden"}
+function openStaff(){ev("staff");store.set("sibisi.ordered","1");renderStaff();$("staff").hidden=false;document.body.style.overflow="hidden"}
 function closeStaff(){$("staff").hidden=true;document.body.style.overflow=$("order").hidden?"":"hidden";
   if(!$("order").hidden)renderOrder()}   // 点过店员页之后，饭后签才会出现，得重画一次
 $("cb-go").addEventListener("click",openOrder);
 $("totop").addEventListener("click",()=>scrollTo({top:0,behavior:"smooth"}));
 const topBtn=()=>{$("totop").hidden=scrollY<700};
 addEventListener("scroll",topBtn,{passive:true});topBtn();
+// --- 统计 ---------------------------------------------------------------
+// 会话 id 只在内存里，页面一关就没了：不写 cookie 也不写 localStorage，
+// 所以不需要 cookie 横幅。STATS 为空时一个请求都不会发。
+const SID=(()=>{try{return crypto.randomUUID()}catch(e){return Date.now().toString(36)+Math.random().toString(36).slice(2)}})();
+const TRACK=!!STATS&&navigator.doNotTrack!=="1"&&!navigator.globalPrivacyControl;
+const EVQ=[];
+function ev(n,v){if(!TRACK)return;EVQ.push([n,v==null?null:String(v).slice(0,40)]);if(EVQ.length>=40)evFlush()}
+function evFlush(){
+  if(!TRACK||!EVQ.length)return;
+  // text/plain 不触发 CORS 预检，省一个往返；sendBeacon 保证切后台也发得出去
+  const b=JSON.stringify({s:SID,w:innerWidth,e:EVQ.splice(0,EVQ.length)});
+  try{navigator.sendBeacon(STATS,new Blob([b],{type:"text/plain"}))}catch(e){}
+}
+addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")evFlush()});
+addEventListener("pagehide",evFlush);
+
 // 来过的人打开菜单时换一句招呼（只存在这台手机上）
 let BACK=false;
 (function(){try{
@@ -771,4 +788,4 @@ let BACK=false;
 }catch(e){}})();
 (function(){let l=new URLSearchParams(location.search).get("l")||store.get("lang");
  if(!l){const n=(navigator.language||"es").slice(0,2);l=n==="zh"?"zh":(n==="es"||n==="ca")?"es":"en"}
- L=T[l]?l:"es";render()})();
+ L=T[l]?l:"es";render();ev("open",L)})();
