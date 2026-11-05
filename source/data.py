@@ -267,7 +267,7 @@ CT = {
 
 # --- 店铺信息 -------------------------------------------------------------
 # 统计上报地址（Cloudflare Worker 的 /c）。留空就完全不上报，一行都不发
-STATS = ""
+STATS = "https://sibisi-stats.cartaviva.workers.dev/c"
 
 # 页脚署名：品牌名和作品页地址只在这里改
 BRAND = "Carta Viva"
