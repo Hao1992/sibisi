@@ -5,6 +5,7 @@ const NAMES = new Set(["open", "lang", "staff"]);
 const MAX_BODY = 8 * 1024;   // 一次最多 8 KB，超了直接丢
 const MAX_EVENTS = 50;       // 一批最多 50 条
 const DAY = 86400000;
+const KEEP_DAYS = 90;        // 原始事件只留 90 天，之后自动删掉
 
 const allowed = (env) => String(env.ORIGIN || "").split(",").map((x) => x.trim()).filter(Boolean);
 
@@ -30,6 +31,17 @@ export default {
       return stats(url, env);
     }
     return new Response("sibisi-stats", { status: 200 });
+  },
+
+  // 每天跑一次，删掉过了保留期的原始事件。
+  // README 里写了「原始事件留 60–90 天」，这个钩子就是把那句话落实了，
+  // 不靠人记得去清。按天聚合的长期趋势是第 2 期报表页的事。
+  async scheduled(_evt, env, ctx) {
+    ctx.waitUntil(
+      env.DB.prepare("DELETE FROM ev WHERE ts < ?")
+        .bind(Date.now() - KEEP_DAYS * DAY)
+        .run()
+    );
   },
 };
 

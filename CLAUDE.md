@@ -22,7 +22,10 @@ Valencia 的 Sibisi Ramen（食必思）三语（西 / 英 / 中）手机菜单�
 - 第 0 期只记三个事件：`open`（带初始语言）、`lang`（切语言）、`staff`（点了「给服务员看」）
 - 会话 id 只在内存里，统计不写 cookie 也不写 localStorage；IP 不入库
 - 加新事件时在 `worker.js` 的 `NAMES` 白名单里同步加，否则会被服务端丢掉
-- 部署步骤见 `collector/README.md`
+- 已部署：`https://sibisi-stats.cartaviva.workers.dev`，`STATS` 已填，线上在收数据
+- 看报表：`collector/stats.sh`（口令在 macOS 钥匙串里，服务名 `sibisi-stats-token`）
+- 原始事件只留 90 天，Worker 每天定时清理一次
+- 细节见 `collector/README.md`
 
 ## 新照片
 裁成正方形、去雾提亮、暖色、轻锐化，存成 `img/<菜号>.jpg`，然后在 `data.py` 对应菜加 `img="<菜号>"`。

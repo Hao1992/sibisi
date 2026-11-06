@@ -20,56 +20,57 @@
 
 浏览器开了 Do Not Track 或 Global Privacy Control 的，直接不上报。
 
-**保留期：** 原始事件建议留 60–90 天，之后只留按天聚合的结果。还没写自动清理，第 1 期再加。
+**保留期：** 原始事件留 90 天。Worker 每天 04:17 UTC 跑一次定时任务自动删掉过期的，
+代码在 `worker.js` 的 `scheduled()` 里，天数是 `KEEP_DAYS`。按天聚合的长期趋势留给第 2 期的报表页。
 
-## 部署（只需要做一次）
+## 已经部署好了
 
-需要一个 Cloudflare 账号（免费，不用绑卡）。下面的命令在 `collector/` 目录里跑。
+2026-11-05 部署完成，现在是活的：
 
-登录：
+| | |
+|---|---|
+| Worker | `https://sibisi-stats.cartaviva.workers.dev` |
+| 收集口 | `/c`（已填进 `source/data.py` 的 `STATS`） |
+| 报表口 | `/s?k=<TOKEN>&d=<天数>` |
+| D1 数据库 | `sibisi` |
+| 定时清理 | 每天 04:17 UTC |
+
+`TOKEN` 存在 macOS 登录钥匙串里，服务名 `sibisi-stats-token`，`stats.sh` 会自己去取。
+要在别的机器上看数据，用「钥匙串访问」把它复制出来。
+
+改了 `worker.js` 之后重新部署：
+
+```bash
+cd ~/git/sibisi/collector && npx wrangler deploy
+```
+
+**从零再来一遍的话**（换账号、或者要在别的项目复刻）：
 
 ```bash
 npx wrangler login
-```
-
-建数据库：
-
-```bash
-npx wrangler d1 create sibisi
-```
-
-把它打印出来的 `database_id` 填进 `wrangler.toml`，然后建表：
-
-```bash
+npx wrangler d1 create sibisi          # 把打印的 database_id 填进 wrangler.toml
 npx wrangler d1 execute sibisi --remote --file=./schema.sql
-```
-
-设一个读报表用的口令（随便一串长的，记下来）：
-
-```bash
-npx wrangler secret put TOKEN
-```
-
-部署：
-
-```bash
+T=$(openssl rand -hex 24)
+printf '%s' "$T" | npx wrangler secret put TOKEN
+security add-generic-password -U -a sibisi-stats -s sibisi-stats-token -w "$T"
 npx wrangler deploy
 ```
 
-部署完会打印一个地址，形如 `https://sibisi-stats.<你的账号>.workers.dev`。
-把 **`<那个地址>/c`** 填进 `source/data.py` 的 `STATS`，然后 `python3 source/build.py` 并提交。
-
-`STATS` 留空时菜单一个请求都不会发，所以没部署之前推上线也是安全的。
+新账号第一次用 Workers，要先在面板上打开一次 Workers & Pages 页面，
+Cloudflare 才会分配 `*.workers.dev` 子域名，否则 `deploy` 会报 subdomain 不可用。
+新子域名的 TLS 证书签发要一两分钟，这期间 curl 会报 handshake failure，等一下就好。
 
 ## 看数据
 
 ```bash
-curl "https://sibisi-stats.<你的账号>.workers.dev/s?k=<你的TOKEN>&d=14"
+~/git/sibisi/collector/stats.sh
 ```
 
-`d` 是往前看多少天（1–90）。返回：总会话数、走到「给服务员看」的比例、按天拆分、初始语言分布、语言切换次数、国家分布。
+默认最近 14 天。`stats.sh 7` 看 7 天，`stats.sh 90 raw` 出原始 JSON。
+口令它自己从钥匙串取，不用手输，也不会进 shell 历史。
 
-**初始语言分布这一项，直接回答了要不要加第四种语言。** 不用再靠游客统计去猜。
+输出里**「开菜单时的语言」这一项，直接回答了要不要加第四种语言**，
+不用再靠瓦伦西亚的游客统计去猜。
 
 ## 本地调试
 

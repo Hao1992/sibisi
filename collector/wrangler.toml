@@ -11,3 +11,7 @@ database_id = "4a3a4fd7-85aa-4fb5-be21-2db363d0e8c1"
 [vars]
 # 允许上报的来源。菜单换域名的话这里要跟着改
 ORIGIN = "https://hao1992.github.io"
+
+# 每天 04:17 UTC 跑一次清理，删掉 90 天前的原始事件
+[triggers]
+crons = ["17 4 * * *"]
