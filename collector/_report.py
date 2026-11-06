@@ -18,6 +18,10 @@ try:
         NAME[_c["id"]] = "套餐 " + _c.get("zh", _c["id"])
     for _k, _v in _d.DRK.items():
         NAME[_k] = _v[0][0]
+    # 酒水单里的饮料 id 是「分类-序号」，和推荐加点用的 DRK 键是两套，两套都要能翻
+    for _cat, _lst in _d.DR.items():
+        for _i, _x in enumerate(_lst):
+            NAME["dr-%s-%d" % (_cat, _i)] = _x[0][0]
 except Exception:
     pass            # 读不到就只显示菜号，不让报表挂掉
 
@@ -97,7 +101,7 @@ for title, rows, k, v, note in [
     if title in ("多人套餐", "饮料"):
         top = max(r[v] for r in rows) or 1
         for r in rows:
-            print("  %s %4d  %s" % (label(r[k], 18), r[v],
+            print("  %s %4d  %s" % (label(r[k], 26), r[v],
                                     "█" * max(1, round(r[v] / top * 16))))
     else:
         bars(rows, k, v)
