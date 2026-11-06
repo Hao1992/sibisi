@@ -1,7 +1,11 @@
 // 菜单统计收集器（第 0 期）。只认三个事件，不碰 IP，不发 cookie。
 // 部署：见 README.md
 
-const NAMES = new Set(["open", "lang", "staff"]);
+// 白名单之外的事件名服务端一律丢掉。菜单那边加新埋点，这里要同步加
+const NAMES = new Set([
+  "open", "lang", "staff",                      // 第 0 期：会话层
+  "imp", "det", "add", "pair", "combo", "drink" // 第 1 期：菜品层
+]);
 const MAX_BODY = 8 * 1024;   // 一次最多 8 KB，超了直接丢
 const MAX_EVENTS = 50;       // 一批最多 50 条
 const DAY = 86400000;
@@ -127,6 +131,33 @@ async function stats(url, env) {
      FROM ev WHERE ts > ? GROUP BY pais ORDER BY sesiones DESC LIMIT 15`
   ).bind(since).all();
 
+  // 菜品漏斗：看到 → 点开 → 加进清单。三层都按「多少个会话」算，不是按次数，
+  // 所以同一个人反复点同一道菜不会把分子撑大，相除才是真的转化率。
+  const platos = await env.DB.prepare(
+    `SELECT v AS plato,
+            COUNT(DISTINCT CASE WHEN name='imp'  THEN sid END) AS visto,
+            COUNT(DISTINCT CASE WHEN name='det'  THEN sid END) AS abierto,
+            COUNT(DISTINCT CASE WHEN name='add'  THEN sid END) AS anadido,
+            COUNT(DISTINCT CASE WHEN name='pair' THEN sid END) AS por_sugerencia
+     FROM ev
+     WHERE ts > ? AND v IS NOT NULL AND name IN ('imp','det','add','pair')
+     GROUP BY v
+     ORDER BY anadido DESC, visto DESC
+     LIMIT 80`
+  ).bind(since).all();
+
+  const packs = await env.DB.prepare(
+    `SELECT v AS pack, COUNT(DISTINCT sid) AS sesiones
+     FROM ev WHERE ts > ? AND name='combo' AND v IS NOT NULL
+     GROUP BY v ORDER BY sesiones DESC`
+  ).bind(since).all();
+
+  const bebidas = await env.DB.prepare(
+    `SELECT v AS bebida, COUNT(DISTINCT sid) AS sesiones
+     FROM ev WHERE ts > ? AND name='drink' AND v IS NOT NULL
+     GROUP BY v ORDER BY sesiones DESC LIMIT 20`
+  ).bind(since).all();
+
   const tot = await env.DB.prepare(
     `SELECT COUNT(DISTINCT sid)                                 AS sesiones,
             COUNT(DISTINCT CASE WHEN name='staff' THEN sid END) AS al_camarero,
@@ -143,5 +174,8 @@ async function stats(url, env) {
     idioma_inicial: byLang.results,
     cambios_de_idioma: switches.results,
     paises: byCountry.results,
+    platos: platos.results,
+    packs: packs.results,
+    bebidas: bebidas.results,
   });
 }

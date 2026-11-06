@@ -840,6 +840,7 @@ function render(){
   $("menu").innerHTML=h;
   syncCart();
   spy();
+  dishSpy();
 }
 /* ---------- 多人组合：固定搭配，一个按钮加全 ---------- */
 const packOpt=k=>k.indexOf("dr-")===0
@@ -882,7 +883,7 @@ function chopBlock(){
   return `<button class="eggb" type="button" data-chop="1" aria-expanded="${CHOPOPEN}">${eggIcon("chop")}${esc(t.chopT)}</button>`
     +(CHOPOPEN?`<div class="chop">${CHOP.map((x,i)=>`<div class="cstep">${chopSvg(i+1)}<p><b>${i+1}</b>${esc(x[LI[L]])}</p></div>`).join("")}<small>${esc(t.chopEnd)}</small></div>`:"")}
 function openDet(c){
-  const d=findDish(c);if(!d||!DET[c])return;const t=T[L],lb=LBL[L],x=DET[c][L];
+  const d=findDish(c);if(!d||!DET[c])return;ev("det",c);const t=T[L],lb=LBL[L],x=DET[c][L];
   const rows=["what","story","ing","taste","adj","how","note","who"].filter(k=>x[k]).map(k=>{
     const v=k==="adj"?t.adj:(k==="how"&&x.how==="POT"?t.pot:x[k]);return `<div><dt>${lb[k]}</dt><dd>${esc(v)}</dd></div>`}).join("");
   const price=d.p2?`${eur(d.p,L)} / ${eur(d.p2,L)}`:eur(d.p,L);
@@ -901,11 +902,15 @@ function closeDet(){DETC=null;$("sheet").hidden=true;$("scrim").hidden=true;
 document.addEventListener("click",e=>{
   const q=e.target.closest("[data-q]");
   if(q){e.preventDefault();const f=+q.dataset.q>0?flyFrom(q):null;
+    // 只记「加」，不记「减」。减一下再加一下不该算两次
+    if(+q.dataset.q>0){if(q.dataset.c)ev("add",q.dataset.c);else if(q.dataset.dr)ev("drink",q.dataset.dv||q.dataset.dr)}
     cartBump(q.dataset.k,+q.dataset.q,q.dataset);flyToCart(f);
     return}
   const cb=e.target.closest("[data-combo]");
   if(cb){e.preventDefault();
     const c=cb.dataset.combo,sel=PICK[c]||{sd:{},dr:{}},f=flyFrom(cb);
+    // add 是「这道菜进了清单」的总数；pair 另记一笔，用来看推荐搭配这个按钮做了多少功
+    ev("add",c);ev("pair",c);
     cartBump(c,1,{c:c});
     for(const e of Object.values(sel.sd||{}))cartBump(e.o.k,e.q,{c:e.o.c,sz:e.o.sz});
     for(const e of Object.values(sel.dr||{}))cartBump(e.o.k,e.q,{dr:e.o.dr,dv:e.o.dv});
@@ -919,7 +924,9 @@ document.addEventListener("click",e=>{
     return}
   const pk=e.target.closest("[data-pack]");
   if(pk){e.preventDefault();const p=COMBO.find(x=>x.id===pk.dataset.pack),f=flyFrom(pk);
+    ev("combo",pk.dataset.pack);
     for(const[k,q]of p.items){const o=packOpt(k);
+      if(o.c)ev("add",o.c);                 // 套餐带进去的菜也算点了，不然这些菜像没人要
       cartBump(k,q,o.dr?{dr:o.dr,dv:o.dv}:{c:o.c,sz:o.sz})}
     flyToCart(f);return}
   const ch=e.target.closest("[data-chop]");
@@ -1279,6 +1286,30 @@ function evFlush(){
 }
 addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")evFlush()});
 addEventListener("pagehide",evFlush);
+
+// 菜品漏斗：看到 → 点开 → 加进清单
+//
+// 「看到」的口径是卡片露出一半并停了 1 秒，划过去的不算，而且一道菜一个会话
+// 只记一次。口径卡严是有意的：三层用的是同一批会话，相除才有意义——
+// 「看到的人里有多少点开」「点开的人里有多少加进清单」。
+// 换语言会重建整个菜单 DOM，所以每次 render 都要重新 observe，
+// 但 SEEN 挂在会话上，切语言不会把同一道菜重复计一次。
+const SEEN={},DWELL={};
+let IO=null;
+function dishSpy(){
+  if(!TRACK||typeof IntersectionObserver!=="function")return;
+  if(IO)IO.disconnect();
+  else IO=new IntersectionObserver(es=>{
+    for(const e of es){
+      const c=e.target.id.slice(2);
+      if(e.isIntersecting){
+        if(SEEN[c])continue;
+        DWELL[c]=setTimeout(()=>{if(!SEEN[c]){SEEN[c]=1;ev("imp",c)}},1000);
+      }else clearTimeout(DWELL[c]);
+    }
+  },{threshold:.5});
+  document.querySelectorAll("#menu .dish").forEach(el=>IO.observe(el));
+}
 
 // 来过的人打开菜单时换一句招呼（只存在这台手机上）
 let BACK=false;
