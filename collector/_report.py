@@ -38,7 +38,7 @@ def pad(s, width):
     return out + " " * (width - w(out))
 
 
-def label(code, width=20):
+def label(code, width=24):
     n = NAME.get(code, "")
     return pad("%-5s %s" % (code, n) if n else code, width)
 
@@ -71,7 +71,7 @@ if platos:
     print()
     print("菜品漏斗（按多少个会话算，不是按次数）")
     print("-" * 52)
-    print("  %s %4s %4s %4s   %s" % (pad("菜", 20), "看到", "点开", "加入", "看到→加入"))
+    print("  %s %4s %4s %4s   %s" % (pad("菜", 24), "看到", "点开", "加入", "看到→加入"))
     for r in platos[:40]:
         visto, ab, an = r["visto"], r["abierto"], r["anadido"]
         pct = ("%.0f%%" % (an / visto * 100)) if visto else "—"
