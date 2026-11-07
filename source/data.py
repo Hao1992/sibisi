@@ -273,7 +273,17 @@ STATS = "https://sibisi-stats.cartaviva.workers.dev/c"
 BRAND = "Carta Viva"
 BYURL = "https://hao1992.github.io/cartaviva/"
 
+# 电话只在这里写一次。页脚显示的分组号码、tel: 链接、复制按钮全都从 TEL 推出来——
+# 以前这个号码在 head2.part 和 app.js.tpl 里各写死了一份，改 TEL 只有链接会跟着变，
+# 页面上显示的和复制按钮给出的都还是旧号，而且不会报错，没人会发现
 TEL = "+34671343226"
+# 页脚显示用的分组形式：去掉 +34 国码，按 3-3-3 分（西班牙号码都是 9 位）。
+# 换成别国号码时这里的分组要跟着改，所以下面直接断言，格式不对就让构建失败，
+# 而不是在页面上默默显示一串没分组的数字
+_d = TEL.replace(" ", "")
+assert _d.startswith("+34") and len(_d) == 12 and _d[1:].isdigit(), \
+    "TEL 不是 +34 开头的 9 位西班牙号码，页脚的分组逻辑要跟着改: %r" % TEL
+TELTXT = "%s %s %s" % (_d[3:6], _d[6:9], _d[9:12])
 MAP = "https://maps.app.goo.gl/jDEgD1ig8q6Gt72TA"
 REV = "https://www.google.com/search?q=Sibisi+restaurant+ramen+Valencia#lrd=0xd604ff2c6100665:0x904337579649cf0,3,,,"
 

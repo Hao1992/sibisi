@@ -289,7 +289,6 @@ function render(){
   renderPacks();
   $("promise").innerHTML=`<b>${esc(t.promiseT)}</b><ul>${t.promise.map(([ic,x])=>`<li><span>${ic}</span>${esc(x)}</li>`).join("")}</ul>`;
   $("f-take").textContent=t.take; $("copy").textContent=t.copy;
-  $("phone").href="tel:"+TEL;
   $("totop").setAttribute("aria-label",CT[L].toTop);
   $("f-hrs-t").textContent=t.hrsT;
   const wd=new Date().getDay();
@@ -470,7 +469,7 @@ document.querySelectorAll(".lang button").forEach(b=>b.addEventListener("click",
 $("copy").addEventListener("click",e=>{
   const b=e.currentTarget;const sel=()=>getSelection().selectAllChildren($("phone"));
   const done=()=>{b.textContent=T[L].copied;setTimeout(()=>b.textContent=T[L].copy,1500)};
-  try{navigator.clipboard.writeText("+34671343226").then(done,sel)}catch(_){sel()}
+  try{navigator.clipboard.writeText(TEL).then(done,sel)}catch(_){sel()}
 });
 let obs;
 function spy(){

@@ -408,7 +408,7 @@ body.detailing .totop,body.ordering .totop{display:none}
   </div>
 
   <footer class="foot">
-    <div class="row"><div><div class="legend" id="f-take"></div><a class="phone" id="phone" href="tel:+34671343226">671 343 226</a></div><button class="copy" id="copy"></button></div>
+    <div class="row"><div><div class="legend" id="f-take"></div><a class="phone" id="phone" href="tel:__TELRAW__">__TELTXT__</a></div><button class="copy" id="copy"></button></div>
     <div class="row"><div class="legend" id="f-hrs-t"></div><div class="hrs" id="f-hrs"></div></div>
     <div class="row"><div>C/ de Julio Antonio, 24 · 46007 València</div><a class="flink" id="f-dirs" target="_blank" rel="noopener"></a></div>
     <div class="row"><a class="flink" id="f-rev" target="_blank" rel="noopener"></a></div>
