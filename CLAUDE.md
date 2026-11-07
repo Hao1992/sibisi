@@ -10,6 +10,12 @@ Valencia 的 Sibisi Ramen（食必思）三语（西 / 英 / 中）手机菜单�
 - `source/app.js.tpl`、`head2.part`、`illo.part` — 页面逻辑、样式、无照片时的示意插画
 - `source/build.py` — 生成 `index.html`
 
+## 电话号码
+店里的电话**只在 `data.py` 的 `TEL` 里写一次**。页脚显示的分组号码（`TELTXT`，去 +34、按 3-3-3 分）、
+`tel:` 链接、复制按钮全都从它推出来。`build.py` 末尾有防回归检查：号码要是又被写死进任何模板，构建直接失败。
+`head2.part` 现在也做 token 替换，但只认 `__TELRAW__` / `__TELTXT__` 这两个（原样插入，不走 JSON）；
+要加新 token 得在 `build.py` 那个 head 的循环里加。
+
 ## 改动流程
 1. 改 `source/data.py` 或 `source/det.py`（价格是 `d("菜号", 中文名, 西语名, 英文名, 价格, ...)` 的第 5 个参数）
 2. `python3 source/build.py`，输出里 `missing images` 应为 `none`
