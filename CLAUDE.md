@@ -20,10 +20,18 @@ Valencia 的 Sibisi Ramen（食必思）三语（西 / 英 / 中）手机菜单�
 - `collector/` 是 Cloudflare Worker + D1 的事件收集器，**不是网页的一部分**（跟着 Pages 一起发布，但没人会去访问）
 - 菜单这边只有一个开关：`source/data.py` 的 `STATS`。留空就一个请求都不发
 - 第 0 期（会话层）：`open`（带初始语言）、`lang`（切语言）、`staff`（点了「给服务员看」）
-- 第 1 期（菜品层）：`imp`（卡片露出一半停 1 秒，一道菜一个会话只记一次）、`det`（点开详情）、
+- 第 1 期（菜品层）：`imp`（卡片露出一半停 1 秒）、`det`（点开详情）、
   `add`（加进清单，套餐带进去的也算）、`pair`（走的是「推荐搭配」按钮）、`combo`（多人套餐）、`drink`（饮料）
+- 第 1.5 期（来源）：`imp` / `det` / `add` / `drink` 都带 `src`，记这一下发生在哪个区域：
+  `menu` 菜单正文、`luck` 节气推荐、`first` 顶层推荐、`hero` 首屏按钮、`det` 详情页里、
+  `pairbox` 详情页「整套加入」带进去的、`order` 结算前加点、`pick` 加小菜/饮料全屏列表、
+  `pack` 多人套餐、`drinks` 酒水单。**同一道菜从节气推荐进清单和从菜单正文进清单，含义完全不一样**
+- `imp` 的去重键是「菜 + 来源」，所以一道菜在节气框和菜单正文各算一次露出；
+  要是只按菜号去重，从节气框加的菜会被算进菜单正文的转化率里
 - 会话 id 只在内存里，统计不写 cookie 也不写 localStorage；IP 不入库
-- 加新事件时在 `worker.js` 的 `NAMES` 白名单里同步加，否则会被服务端丢掉
+- 加新事件时在 `worker.js` 的 `NAMES` 白名单里同步加，否则会被服务端丢掉；
+  新增区域要三处同步：`app.js.tpl` 的 `SRC`、`worker.js` 的 `SRCS`、`_report.py` 的 `SRCN`
+- 页面上任何新的「加进清单」入口，容器 id 必须进 `SRC` 表，否则来源会落成空值
 - 已部署：`https://sibisi-stats.cartaviva.workers.dev`，`STATS` 已填，线上在收数据
 - 看报表：`collector/stats.sh`（口令在 macOS 钥匙串里，服务名 `sibisi-stats-token`）
 - 原始事件只留 90 天，Worker 每天定时清理一次
