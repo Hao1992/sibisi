@@ -177,13 +177,14 @@ function renderLuck(){
      <b class="lbz">${esc(q[2])}</b>
      <span class="lbp">${esc(q[3])}${L==="zh"?"":" · "+esc(L==="es"?q[4]:q[5])}</span></div>
     ${LUCK.fb?"":`<p>${esc(JQW[q[6]][LI[L]])}</p>`}
-    <div class="lrow">
+    <div class="lrow" data-im="${d.c}">
       <div class="thumb">${d.img?`<img src="img/t/${d.img}.jpg" alt="" loading="lazy">`:illo(d.c,"")}<span class="badge">${d.c}</span></div>
       <div class="lt"><h4>${esc(L==="zh"?d.zh:d[L])}</h4>${DET[d.c]?`<button class="llink" type="button" data-det="${d.c}">${esc(t.seeIt)}</button>`:""}</div>
       <div class="lr"><b>${eur(d.p,L)}</b>${stepper(d.c,`data-c="${d.c}"`)}</div></div>
     <button class="chip more" type="button" id="lagain">${esc(t.luckAgain)}</button>`;
   $("lagain").onclick=()=>{LUCK=pickLucky();renderLuck();
     $("luck").scrollIntoView({block:"nearest",behavior:"smooth"})};
+  dishSpy();          // 「再来一个」不走 render，这里得自己把新的一行挂上观察
 }
 function renderFil(){
   const t=T[L],n=S.reduce((a,sec)=>a+sec.d.filter(dishOk).length,0);
@@ -283,7 +284,7 @@ function render(){
   $("steps").innerHTML=t.steps.map(s=>`<li>${esc(s)}</li>`).join("");
   $("first-t").textContent=t.firstT;
   $("first").innerHTML=FIRST.map(f=>{const d=findDish(f.c),det=DET[f.c]?` data-det="${f.c}" tabindex="0" role="button"`:"";
-    return `<li${det}><div class="thumb">${d.img?`<img src="img/t/${d.img}.jpg" alt="" loading="lazy">`:illo(d.c,"")}<span class="badge">${d.c}</span></div>
+    return `<li data-im="${f.c}"${det}><div class="thumb">${d.img?`<img src="img/t/${d.img}.jpg" alt="" loading="lazy">`:illo(d.c,"")}<span class="badge">${d.c}</span></div>
       <div class="ft"><h4>${esc(L==="zh"?d.zh:d[L])}</h4><em>${esc(f[L])}</em></div>
       <div class="fr"><b>${eur(d.p,L)}</b>${stepper(d.c,`data-c="${d.c}"`)}</div></li>`}).join("");
   $("herobuy").innerHTML=`<span class="qlab">1-1 ${esc(L==="zh"?findDish("1-1").zh:findDish("1-1")[L])}</span>${stepper("1-1",'data-c="1-1"')}`;
@@ -325,7 +326,7 @@ function render(){
            <div class="qty2"><span class="qlab">${SZ[L].l}</span>${stepper(d.c+"|l",`data-c="${d.c}" data-sz="l"`)}</div>`
         :stepper(d.c,`data-c="${d.c}"`);
       const price=d.p2?`<span class="pz">${SZ[L].s}</span>${eur(d.p,L)}<span class="pz">${SZ[L].l}</span>${eur(d.p2,L)}`:eur(d.p,L);
-      h+=`<div class="dish" id="d-${d.c}"${det}><div class="thumb">${d.img?`<img src="img/t/${d.img}.jpg" alt="" loading="lazy">`:illo(d.c,"")}<span class="badge">${d.c}</span></div>
+      h+=`<div class="dish" id="d-${d.c}" data-im="${d.c}"${det}><div class="thumb">${d.img?`<img src="img/t/${d.img}.jpg" alt="" loading="lazy">`:illo(d.c,"")}<span class="badge">${d.c}</span></div>
         <div class="t"><h4>${esc(name)}</h4><div class="zhn">${esc(sub)}</div>${desc?`<p>${esc(desc)}</p>`:""}${taste?`<div class="taste">${taste}</div>`:""}${tags?`<div class="tags">${tags}</div>`:""}${algRow(d.al,true)}${pairLine(d)}${DET[d.c]?`<span class="more">${t.more}</span>`:""}<div class="qwrap">${qty}</div></div>
         <div class="price${d.p2?" two":""}">${price}</div></div>`;
     }
@@ -381,8 +382,8 @@ function chopBlock(){
   const t=T[L];
   return `<button class="eggb" type="button" data-chop="1" aria-expanded="${CHOPOPEN}">${eggIcon("chop")}${esc(t.chopT)}</button>`
     +(CHOPOPEN?`<div class="chop">${CHOP.map((x,i)=>`<div class="cstep">${chopSvg(i+1)}<p><b>${i+1}</b>${esc(x[LI[L]])}</p></div>`).join("")}<small>${esc(t.chopEnd)}</small></div>`:"")}
-function openDet(c){
-  const d=findDish(c);if(!d||!DET[c])return;ev("det",c);const t=T[L],lb=LBL[L],x=DET[c][L];
+function openDet(c,s){
+  const d=findDish(c);if(!d||!DET[c])return;ev("det",c,s||"");const t=T[L],lb=LBL[L],x=DET[c][L];
   const rows=["what","story","ing","taste","adj","how","note","who"].filter(k=>x[k]).map(k=>{
     const v=k==="adj"?t.adj:(k==="how"&&x.how==="POT"?t.pot:x[k]);return `<div><dt>${lb[k]}</dt><dd>${esc(v)}</dd></div>`}).join("");
   const price=d.p2?`${eur(d.p,L)} / ${eur(d.p2,L)}`:eur(d.p,L);
@@ -402,17 +403,20 @@ document.addEventListener("click",e=>{
   const q=e.target.closest("[data-q]");
   if(q){e.preventDefault();const f=+q.dataset.q>0?flyFrom(q):null;
     // 只记「加」，不记「减」。减一下再加一下不该算两次
-    if(+q.dataset.q>0){if(q.dataset.c)ev("add",q.dataset.c);else if(q.dataset.dr)ev("drink",q.dataset.dv||q.dataset.dr)}
+    if(+q.dataset.q>0){const s=srcOf(q);
+      if(q.dataset.c)ev("add",q.dataset.c,s);else if(q.dataset.dr)ev("drink",q.dataset.dv||q.dataset.dr,s)}
     cartBump(q.dataset.k,+q.dataset.q,q.dataset);flyToCart(f);
     return}
   const cb=e.target.closest("[data-combo]");
   if(cb){e.preventDefault();
     const c=cb.dataset.combo,sel=PICK[c]||{sd:{},dr:{}},f=flyFrom(cb);
     // add 是「这道菜进了清单」的总数；pair 另记一笔，用来看推荐搭配这个按钮做了多少功
-    ev("add",c);ev("pair",c);
+    ev("add",c,"pairbox");ev("pair",c);
     cartBump(c,1,{c:c});
-    for(const e of Object.values(sel.sd||{}))cartBump(e.o.k,e.q,{c:e.o.c,sz:e.o.sz});
-    for(const e of Object.values(sel.dr||{}))cartBump(e.o.k,e.q,{dr:e.o.dr,dv:e.o.dv});
+    // 推荐搭配带进去的小菜和饮料以前一笔都不记，所以「推荐的小菜到底有没有人要」
+    // 这个问题之前答不了。海藻、辣白菜这些出餐快、利润高，正是最该看的
+    for(const e of Object.values(sel.sd||{})){if(e.o.c)ev("add",e.o.c,"pairbox");cartBump(e.o.k,e.q,{c:e.o.c,sz:e.o.sz})}
+    for(const e of Object.values(sel.dr||{})){ev("drink",e.o.dv||e.o.dr,"pairbox");cartBump(e.o.k,e.q,{dr:e.o.dr,dv:e.o.dv})}
     flyToCart(f);
     return}
   const fb=e.target.closest("[data-fil]");
@@ -425,7 +429,8 @@ document.addEventListener("click",e=>{
   if(pk){e.preventDefault();const p=COMBO.find(x=>x.id===pk.dataset.pack),f=flyFrom(pk);
     ev("combo",pk.dataset.pack);
     for(const[k,q]of p.items){const o=packOpt(k);
-      if(o.c)ev("add",o.c);                 // 套餐带进去的菜也算点了，不然这些菜像没人要
+      if(o.c)ev("add",o.c,"pack");          // 套餐带进去的菜也算点了，不然这些菜像没人要
+      else if(o.dr)ev("drink",o.dv||o.dr,"pack");
       cartBump(k,q,o.dr?{dr:o.dr,dv:o.dv}:{c:o.c,sz:o.sz})}
     flyToCart(f);return}
   const ch=e.target.closest("[data-chop]");
@@ -446,17 +451,21 @@ document.addEventListener("click",e=>{
   const cq=e.target.closest("[data-cq]");
   if(cq){e.preventDefault();const[kind,c,k,n]=cq.dataset.cq.split(";");
     const f=+n>0&&!$("pick").hidden?flyFrom(cq):null;
+    // c 是 * 表示直接进清单（「其他小菜 / 其他饮料」那个全屏列表），这条路以前一个事件都不发。
+    // c 是菜号时只是在详情页里预选，等点了「整套加入」才算，所以那种不在这里记
+    if(c==="*"&&+n>0){const o=optByKey(kind,k);
+      if(o){if(o.c)ev("add",o.c,"pick");else if(o.dr)ev("drink",o.dv||o.dr,"pick")}}
     bumpPick(kind,c,k,+n);flyToCart(f);return}
   const op=e.target.closest("[data-opt]");
   if(op){e.preventDefault();const[kind,c,i]=op.dataset.opt.split("|");setOpt(kind,c,+i);return}
-  const r=e.target.closest("[data-det]");if(r)openDet(r.dataset.det);
+  const r=e.target.closest("[data-det]");if(r)openDet(r.dataset.det,srcOf(r));
   else if(e.target.id==="scrim"){closeDet();closeOrder()}
 });
 document.addEventListener("keydown",e=>{
   if(e.key==="Escape"){if(!$("pick").hidden)closePick();else if(!$("staff").hidden)closeStaff();else if(!$("order").hidden)closeOrder();else closeDet()}
   if(e.target.closest&&e.target.closest("[data-q],[data-opt]"))return;
   const r=e.target.closest&&e.target.closest("[data-det]");
-  if(r&&(e.key==="Enter"||e.key===" ")){e.preventDefault();openDet(r.dataset.det)}
+  if(r&&(e.key==="Enter"||e.key===" ")){e.preventDefault();openDet(r.dataset.det,srcOf(r))}
 });
 function setLang(l){L=l;store.set("lang",l);render()}
 document.querySelectorAll(".lang button").forEach(b=>b.addEventListener("click",()=>{ev("lang",b.dataset.l);setLang(b.dataset.l)}));
@@ -776,7 +785,7 @@ addEventListener("scroll",topBtn,{passive:true});topBtn();
 const SID=(()=>{try{return crypto.randomUUID()}catch(e){return Date.now().toString(36)+Math.random().toString(36).slice(2)}})();
 const TRACK=!!STATS&&navigator.doNotTrack!=="1"&&!navigator.globalPrivacyControl;
 const EVQ=[];
-function ev(n,v){if(!TRACK)return;EVQ.push([n,v==null?null:String(v).slice(0,40)]);if(EVQ.length>=40)evFlush()}
+function ev(n,v,s){if(!TRACK)return;EVQ.push([n,v==null?null:String(v).slice(0,40),s||null]);if(EVQ.length>=40)evFlush()}
 function evFlush(){
   if(!TRACK||!EVQ.length)return;
   // text/plain 不触发 CORS 预检，省一个往返；sendBeacon 保证切后台也发得出去
@@ -786,11 +795,27 @@ function evFlush(){
 addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")evFlush()});
 addEventListener("pagehide",evFlush);
 
+// 来源：这一下点击发生在页面的哪个区域。同一道菜，从节气推荐点进清单和从
+// 菜单正文点进清单，意思完全不一样——前者说明「推荐有效」，后者说明「菜本身有吸引力」。
+// 只记菜号的话这两件事混成一笔，分不开。
+// 从 DOM 往上找比给每个 render 函数传参数省事得多，而且加新区域只要在这张表里加一行。
+// 顺序有讲究：#bebidas 在 #menu 里面，必须排在 menu 前面；#pick 和 #sheet 是浮层，不嵌在 #menu 里
+const SRC=[["pick","pick"],["sheet","det"],["luck","luck"],["first","first"],
+           ["herobuy","hero"],["packs","pack"],["bebidas","drinks"],["menu","menu"]];
+function srcOf(el){
+  if(!el||!el.closest)return "";
+  for(const[id,tag]of SRC)if(el.closest("#"+id))return tag;
+  return "";
+}
+
 // 菜品漏斗：看到 → 点开 → 加进清单
 //
-// 「看到」的口径是卡片露出一半并停了 1 秒，划过去的不算，而且一道菜一个会话
-// 只记一次。口径卡严是有意的：三层用的是同一批会话，相除才有意义——
-// 「看到的人里有多少点开」「点开的人里有多少加进清单」。
+// 「看到」的口径是卡片露出一半并停了 1 秒，划过去的不算。口径卡严是有意的：
+// 三层用的是同一批会话，相除才有意义——「看到的人里有多少点开」「点开的人里有多少加进清单」。
+//
+// 去重的键是「菜 + 来源」，不是光菜号。一道菜在节气框和菜单正文各算一次露出，
+// 因为这两边的分母要各自跟自己那边的 add 对上；要是只按菜号去重，
+// 从节气框加的菜就会被算进菜单正文的转化率里，归因就错了。
 // 换语言会重建整个菜单 DOM，所以每次 render 都要重新 observe，
 // 但 SEEN 挂在会话上，切语言不会把同一道菜重复计一次。
 const SEEN={},DWELL={};
@@ -800,14 +825,14 @@ function dishSpy(){
   if(IO)IO.disconnect();
   else IO=new IntersectionObserver(es=>{
     for(const e of es){
-      const c=e.target.id.slice(2);
+      const c=e.target.dataset.im,s=srcOf(e.target),k=c+"@"+s;
       if(e.isIntersecting){
-        if(SEEN[c])continue;
-        DWELL[c]=setTimeout(()=>{if(!SEEN[c]){SEEN[c]=1;ev("imp",c)}},1000);
-      }else clearTimeout(DWELL[c]);
+        if(SEEN[k])continue;
+        DWELL[k]=setTimeout(()=>{if(!SEEN[k]){SEEN[k]=1;ev("imp",c,s)}},1000);
+      }else clearTimeout(DWELL[k]);
     }
   },{threshold:.5});
-  document.querySelectorAll("#menu .dish").forEach(el=>IO.observe(el));
+  document.querySelectorAll("[data-im]").forEach(el=>IO.observe(el));
 }
 
 // 来过的人打开菜单时换一句招呼（只存在这台手机上）

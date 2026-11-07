@@ -4,9 +4,13 @@ CREATE TABLE IF NOT EXISTS ev (
   ts      INTEGER NOT NULL,   -- 服务端收到的时间（毫秒）。不信客户端的钟
   sid     TEXT    NOT NULL,   -- 会话 id：只存在那台手机的内存里，关掉页面就没了
   name    TEXT    NOT NULL,   -- open | lang | staff
-  v       TEXT,               -- 事件附带的值（open 带初始语言，lang 带切到哪个语言）
+  v       TEXT,               -- 事件附带的值（open 带初始语言，lang 带切到哪个语言，菜品事件带菜号）
+  src     TEXT,               -- 来源区域：menu|luck|first|hero|det|pairbox|pick|pack|drinks。2026-11-07 加的，之前的行是 NULL
   w       INTEGER,            -- 屏幕宽度，按 60px 分桶，不存精确值
   country TEXT                -- 只存国家代码。IP 明确丢弃，不入库
 );
 CREATE INDEX IF NOT EXISTS ev_ts   ON ev(ts);
 CREATE INDEX IF NOT EXISTS ev_name ON ev(name, ts);
+
+-- 已经建过表的库补这一列（加过了会报 duplicate column，忽略即可）：
+--   npx wrangler d1 execute sibisi --remote --command "ALTER TABLE ev ADD COLUMN src TEXT"

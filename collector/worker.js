@@ -6,6 +6,21 @@ const NAMES = new Set([
   "open", "lang", "staff",                      // 第 0 期：会话层
   "imp", "det", "add", "pair", "combo", "drink" // 第 1 期：菜品层
 ]);
+
+// 来源：这一下发生在页面的哪个区域。同一道菜从节气推荐进清单和从菜单正文进清单，
+// 含义完全不同，所以 imp / det / add / drink 都带这个字段。
+// 和 NAMES 一样是白名单——公开的收集口谁都能灌，不认的值一律存成 null，免得被塞垃圾撑大库
+const SRCS = new Set([
+  "menu",    // 菜单正文的菜品卡片
+  "luck",    // 节气随机推荐
+  "first",   // 顶层「第一次来点什么」
+  "hero",    // 首屏那个 1-1 的加按钮
+  "det",     // 详情页里（含推荐搭配那一行主食）
+  "pairbox", // 详情页的「整套加入」带进去的
+  "pick",    // 「其他小菜 / 其他饮料」全屏列表
+  "pack",    // 多人套餐带进去的
+  "drinks",  // 酒水单
+]);
 const MAX_BODY = 8 * 1024;   // 一次最多 8 KB，超了直接丢
 const MAX_EVENTS = 50;       // 一批最多 50 条
 const DAY = 86400000;
@@ -83,12 +98,13 @@ async function collect(req, env, origin) {
     const name = String(e[0] || "");
     if (!NAMES.has(name)) continue;                    // 白名单之外的一律丢掉
     const v = e[1] == null ? null : String(e[1]).slice(0, 40);
-    rows.push([now, sid, name, v, w, country]);
+    const s = e[2] == null ? null : String(e[2]).slice(0, 12);
+    rows.push([now, sid, name, v, s && SRCS.has(s) ? s : null, w, country]);
   }
   if (!rows.length) return no("nothing valid");
 
   const stmt = env.DB.prepare(
-    "INSERT INTO ev (ts, sid, name, v, w, country) VALUES (?, ?, ?, ?, ?, ?)"
+    "INSERT INTO ev (ts, sid, name, v, src, w, country) VALUES (?, ?, ?, ?, ?, ?, ?)"
   );
   await env.DB.batch(rows.map((r) => stmt.bind(...r)));
   return ok(rows.length);
@@ -146,6 +162,31 @@ async function stats(url, env) {
      LIMIT 80`
   ).bind(since).all();
 
+  // 按来源看：哪个区域真的在促成点单。
+  // 「看到」和「加入」都按会话算，所以 anadido/visto 就是这个区域自己的转化率，
+  // 不会被别的区域的曝光稀释。src 为空的是 11-07 之前收的老数据，单独归到「(旧)」里
+  const fuentes = await env.DB.prepare(
+    `SELECT COALESCE(src,'(旧)') AS fuente,
+            COUNT(DISTINCT CASE WHEN name='imp'   THEN sid END) AS visto,
+            COUNT(DISTINCT CASE WHEN name='det'   THEN sid END) AS abierto,
+            COUNT(DISTINCT CASE WHEN name='add'   THEN sid END) AS anadido,
+            COUNT(DISTINCT CASE WHEN name='drink' THEN sid END) AS bebida
+     FROM ev
+     WHERE ts > ? AND name IN ('imp','det','add','drink')
+     GROUP BY fuente
+     ORDER BY anadido DESC, visto DESC`
+  ).bind(since).all();
+
+  // 菜 × 来源，只看「加进清单」。回答的是「这道菜是靠什么被点走的」
+  const platoFuente = await env.DB.prepare(
+    `SELECT v AS plato, COALESCE(src,'(旧)') AS fuente, COUNT(DISTINCT sid) AS anadido
+     FROM ev
+     WHERE ts > ? AND name='add' AND v IS NOT NULL
+     GROUP BY plato, fuente
+     ORDER BY anadido DESC
+     LIMIT 60`
+  ).bind(since).all();
+
   const packs = await env.DB.prepare(
     `SELECT v AS pack, COUNT(DISTINCT sid) AS sesiones
      FROM ev WHERE ts > ? AND name='combo' AND v IS NOT NULL
@@ -175,6 +216,8 @@ async function stats(url, env) {
     cambios_de_idioma: switches.results,
     paises: byCountry.results,
     platos: platos.results,
+    fuentes: fuentes.results,
+    plato_x_fuente: platoFuente.results,
     packs: packs.results,
     bebidas: bebidas.results,
   });

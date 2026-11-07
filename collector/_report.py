@@ -47,6 +47,21 @@ def label(code, width=24):
     return pad("%-5s %s" % (code, n) if n else code, width)
 
 
+# 来源代码 → 看得懂的名字。和 app.js.tpl 的 SRC、worker.js 的 SRCS 是同一套
+SRCN = {
+    "menu": "菜单正文",
+    "luck": "节气推荐",
+    "first": "顶层推荐",
+    "hero": "首屏按钮",
+    "det": "详情页里",
+    "pairbox": "推荐搭配整套",
+    "pick": "加小菜/饮料列表",
+    "pack": "多人套餐",
+    "drinks": "酒水单",
+    "(旧)": "(旧数据，未分来源)",
+}
+
+
 def bars(rows, k, v, width=16):
     top = max((r[v] for r in rows), default=0) or 1
     for r in rows:
@@ -84,6 +99,37 @@ if platos:
     print()
     print("  「看到」= 卡片露出一半并停留 1 秒，划过去的不算，一道菜一个会话只记一次。")
     print("  「加入」不等于成单——真实销量在店里那套 POS 里。")
+
+fuentes = d.get("fuentes") or []
+if fuentes:
+    print()
+    print("各区域的表现（按多少个会话算）")
+    print("-" * 52)
+    print("  %s %4s %4s %4s   %s" % (pad("区域", 20), "看到", "点开", "加入", "看到→加入"))
+    for r in fuentes:
+        visto, an = r["visto"], r["anadido"]
+        pct = ("%.0f%%" % (an / visto * 100)) if visto else "—"
+        beb = "  (饮料 %d)" % r["bebida"] if r["bebida"] else ""
+        print("  %s %4d %4d %4d   %6s%s"
+              % (pad(SRCN.get(r["fuente"], r["fuente"]), 20), visto, r["abierto"], an, pct, beb))
+    print()
+    print("  只有菜单正文、节气推荐、顶层推荐三处会记「看到」，其余是点出来的，所以没有分母。")
+    print("  推荐搭配整套 / 多人套餐 / 加小菜列表的「加入」是按下一个按钮带进去的一批菜。")
+
+pxf = d.get("plato_x_fuente") or []
+if pxf:
+    by = {}
+    for r in pxf:
+        by.setdefault(r["plato"], []).append((r["fuente"], r["anadido"]))
+    print()
+    print("每道菜是从哪儿被点走的")
+    print("-" * 52)
+    for code, lst in sorted(by.items(), key=lambda x: -sum(n for _, n in x[1]))[:20]:
+        lst.sort(key=lambda x: -x[1])
+        src = " · ".join("%s %d" % (SRCN.get(f, f), n) for f, n in lst)
+        print("  %s %s" % (label(code), src))
+    print()
+    print("  一道菜大部分来自节气或顶层推荐，说明是「被推出去的」，不是自己被挑中的。")
 
 for title, rows, k, v, note in [
     ("开菜单时的语言", d["idioma_inicial"], "idioma", "sesiones",
