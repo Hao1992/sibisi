@@ -159,16 +159,14 @@ function pickLucky(){
   if(!pool.length)return null;
   return {q:q,fb:fb,d:pool[Math.floor(Math.random()*pool.length)]}}
 function renderLuck(){
-  const box=$("luck"),t=T[L];box.hidden=false;
-  if(!LUCK){
-    const q0=jieqi();
-    box.className="lask";box.removeAttribute("style");
-    const sc=jqScene(q0[6]);
-    box.innerHTML=`<button class="lbtn" type="button" id="lbtn" style="${sc.css};color:${sc.ink}">${jqIcon(q0[7],"lic")}
-      <span class="lbt"><b>${esc(t.luckAsk)}</b><em>${esc(t.luckSub.replace("%s",q0[2]))}</em></span></button>`;
-    $("lbtn").onclick=()=>{LUCK=pickLucky();renderLuck();
-      $("luck").scrollIntoView({block:"nearest",behavior:"smooth"})};
-    return}
+  const box=$("luck"),t=T[L];
+  // 进页面就直接把今天这道菜摆出来。以前先显示一个「不知道吃什么？」的按钮，
+  // 要点一下才翻开——2026-11-07 的数据：51 个会话里 0 个人点过，而紧挨在它下面的
+  // 顶层推荐有 38 个会话记到曝光，说明人确实滚过这个位置，只是不愿意多点一下。
+  // 所以把那一下点击去掉了。
+  if(!LUCK||!dishOk(LUCK.d))LUCK=pickLucky();   // 筛选变了的话，原来挑的那道菜可能已经被滤掉
+  if(!LUCK){box.hidden=true;return}             // 筛选把菜全滤光了，这块就别占地方
+  box.hidden=false;
   const d=findDish(LUCK.d.c),q=LUCK.q;
   box.className="luck";box.removeAttribute("style");
   const sc=jqScene(q[6]);
