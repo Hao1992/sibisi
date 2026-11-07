@@ -1301,7 +1301,7 @@ addEventListener("pagehide",evFlush);
 // 只记菜号的话这两件事混成一笔，分不开。
 // 从 DOM 往上找比给每个 render 函数传参数省事得多，而且加新区域只要在这张表里加一行。
 // 顺序有讲究：#bebidas 在 #menu 里面，必须排在 menu 前面；#pick 和 #sheet 是浮层，不嵌在 #menu 里
-const SRC=[["pick","pick"],["sheet","det"],["luck","luck"],["first","first"],
+const SRC=[["pick","pick"],["order","order"],["sheet","det"],["luck","luck"],["first","first"],
            ["herobuy","hero"],["packs","pack"],["bebidas","drinks"],["menu","menu"]];
 function srcOf(el){
   if(!el||!el.closest)return "";

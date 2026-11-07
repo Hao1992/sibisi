@@ -17,6 +17,7 @@ const SRCS = new Set([
   "hero",    // 首屏那个 1-1 的加按钮
   "det",     // 详情页里（含推荐搭配那一行主食）
   "pairbox", // 详情页的「整套加入」带进去的
+  "order",   // 清单里结算前的加点（addonBlock，UPSELL 那些高毛利小菜）
   "pick",    // 「其他小菜 / 其他饮料」全屏列表
   "pack",    // 多人套餐带进去的
   "drinks",  // 酒水单
