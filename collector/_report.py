@@ -1,29 +1,13 @@
 """把 /s 返回的 JSON 排成人能读的样子。stats.sh 调它，不单独用。
 
-菜号到菜名的对照直接读 source/data.py，所以改了菜单这边不用跟着改。
+菜名和来源名在 `_names.py` 里，报表和 dashboard 共用，改菜单这边不用动。
 """
 import json
 import os
 import sys
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-NAME = {}
-try:
-    sys.path.insert(0, os.path.join(HERE, "..", "source"))
-    import data as _d
-    for _s in _d.S:
-        for _dish in _s["d"]:
-            NAME[_dish["c"]] = _dish["zh"]
-    for _c in _d.COMBO:
-        NAME[_c["id"]] = "套餐 " + _c.get("zh", _c["id"])
-    for _k, _v in _d.DRK.items():
-        NAME[_k] = _v[0][0]
-    # 酒水单里的饮料 id 是「分类-序号」，和推荐加点用的 DRK 键是两套，两套都要能翻
-    for _cat, _lst in _d.DR.items():
-        for _i, _x in enumerate(_lst):
-            NAME["dr-%s-%d" % (_cat, _i)] = _x[0][0]
-except Exception:
-    pass            # 读不到就只显示菜号，不让报表挂掉
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from _names import NAME, SRCN            # noqa: E402
 
 
 def w(s):
@@ -45,22 +29,6 @@ def pad(s, width):
 def label(code, width=24):
     n = NAME.get(code, "")
     return pad("%-5s %s" % (code, n) if n else code, width)
-
-
-# 来源代码 → 看得懂的名字。和 app.js.tpl 的 SRC、worker.js 的 SRCS 是同一套
-SRCN = {
-    "menu": "菜单正文",
-    "luck": "节气推荐",
-    "first": "顶层推荐",
-    "hero": "首屏按钮",
-    "det": "详情页里",
-    "pairbox": "推荐搭配整套",
-    "order": "结算前加点",
-    "pick": "加小菜/饮料列表",
-    "pack": "多人套餐",
-    "drinks": "酒水单",
-    "(旧)": "(旧数据，未分来源)",
-}
 
 
 def bars(rows, k, v, width=16):
