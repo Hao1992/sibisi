@@ -50,6 +50,9 @@ export default {
     if (url.pathname === "/s" && req.method === "GET") {
       return stats(url, env);
     }
+    if (url.pathname === "/r" && req.method === "GET") {
+      return rollup(url, env);
+    }
     return new Response("sibisi-stats", { status: 200 });
   },
 
@@ -221,5 +224,40 @@ async function stats(url, env) {
     plato_x_fuente: platoFuente.results,
     packs: packs.results,
     bebidas: bebidas.results,
+  });
+}
+
+// /r?k=TOKEN&d=天数 —— 给 dashboard 用的原始计数，**不做任何分析**。
+// 一条 SQL，按「会话 × 事件名 × 值 × 来源」分组，剩下的全交给 dash.py 的函数层去算。
+// 为什么不在这儿算：聚合写进 SQL 就等于把公式焊死在服务端，改一个口径要重新部署；
+// 而且 /s 已经演示过那条路——每加一个看法就要加一句 SQL。这个口只负责把事实搬出来。
+async function rollup(url, env) {
+  const json = (o, s = 200) =>
+    new Response(JSON.stringify(o), {
+      status: s,
+      headers: { "Content-Type": "application/json; charset=utf-8" },
+    });
+
+  if (!env.TOKEN || url.searchParams.get("k") !== env.TOKEN) {
+    return json({ error: "nope" }, 401);
+  }
+  const days = Math.min(Math.max(parseInt(url.searchParams.get("d") || "14", 10) || 14, 1), 90);
+  const since = Date.now() - days * DAY;
+
+  // t0 / t1 是这一组事件的上报时间范围，不是发生时间（见 README 的「已知的坑」）。
+  // 两个都带出来，dash.py 那边才能看出「整个会话一个毫秒落库」这种缓冲一次性清空的情况
+  const q = await env.DB.prepare(
+    `SELECT sid, name, v, src, COUNT(*) AS n, MIN(ts) AS t0, MAX(ts) AS t1,
+            MAX(w) AS w, MAX(country) AS c
+     FROM ev WHERE ts > ?
+     GROUP BY sid, name, v, src`
+  ).bind(since).all();
+
+  // 行用数组而不是对象：同样的数据省掉一半体积，列名在 cols 里给出
+  return json({
+    dias: days,
+    gen: Date.now(),
+    cols: ["sid", "name", "v", "src", "n", "t0", "t1", "w", "c"],
+    rows: q.results.map((r) => [r.sid, r.name, r.v, r.src, r.n, r.t0, r.t1, r.w, r.c]),
   });
 }

@@ -36,10 +36,16 @@ Valencia 的 Sibisi Ramen（食必思）三语（西 / 英 / 中）手机菜单�
   要是只按菜号去重，从节气框加的菜会被算进菜单正文的转化率里
 - 会话 id 只在内存里，统计不写 cookie 也不写 localStorage；IP 不入库
 - 加新事件时在 `worker.js` 的 `NAMES` 白名单里同步加，否则会被服务端丢掉；
-  新增区域要三处同步：`app.js.tpl` 的 `SRC`、`worker.js` 的 `SRCS`、`_report.py` 的 `SRCN`
+  新增区域要三处同步：`app.js.tpl` 的 `SRC`、`worker.js` 的 `SRCS`、`_names.py` 的 `SRCN`
 - 页面上任何新的「加进清单」入口，容器 id 必须进 `SRC` 表，否则来源会落成空值
 - 已部署：`https://sibisi-stats.cartaviva.workers.dev`，`STATS` 已填，线上在收数据
-- 看报表：`collector/stats.sh`（口令在 macOS 钥匙串里，服务名 `sibisi-stats-token`）
+- **平时看数据跑 `collector/dash.sh`**：生成 `collector/out/dashboard.html` 并打开。
+  指标和结论都是 `dash.py` 里注册的函数（`@metric` / `@rule`），加一个指标只要加个函数，
+  卡片和走势图自动跟着出来；阈值写死在结论函数里，所以「多少算异常」是提前定好的。
+  三层结构和加指标的写法见 `collector/README.md` 的「看板是怎么搭的」
+- 看板走 Worker 的 `/r` 口（只按会话分组的原始计数，不做分析），终端报表走 `/s` 口（服务端聚合好的）
+- 终端报表：`collector/stats.sh`（口令在 macOS 钥匙串里，服务名 `sibisi-stats-token`）
+- 口令不进任何文件，也不写进生成的 HTML；`collector/out/` 不进 git
 - 原始事件只留 90 天，Worker 每天定时清理一次
 - 细节见 `collector/README.md`
 
