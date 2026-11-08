@@ -319,9 +319,12 @@ def _m_first(b):
     return Frac(b.added("first"), b.seen("first"))
 
 
-@metric("staff_rate", "给服务员看", "%", good="up", note="目前最接近「成单」的信号")
+@metric("staff_rate", "建清单的人里给服务员看", "%", good="up", min_b=6,
+        note="分母是「建了清单的」会话，不是全部会话——这个按钮在「清单」那张卡里，"
+             "没建清单的人看不到它。拿全部会话当分母的话，建清单率一掉它就跟着掉，"
+             "看着像按钮出了问题，其实没有")
 def _m_staff(b):
-    return Frac(b.s["staff"], b.ses)
+    return Frac(b.s["staff"], b.s["add"])
 
 
 @metric("drink_rate", "点了饮料", "%", good="up", note="饮料是毛利最高的一档")
@@ -506,6 +509,39 @@ def _r_switch(c):
                "全期 %d 个会话里只有 %d 个中途切过语言（%.0f%%），"
                "按浏览器语言自动判断基本都判对了，这上面不用再花力气。"
                % (c.all.ses, c.all.sw_ses, v))
+
+
+@rule
+def _r_staff_mix(c):
+    """「给服务员看」是非西语客人在用。一拨外国团能把它顶上去，第二天就「掉」回来。
+    所以它动了的时候，先拿基线期各语言的率套到今天的构成上，看构成解不解释得了。"""
+    t, b = c.today, c.base
+    if t.ses < 25 or b.ses < 25:
+        return None
+    tr, br = pc(t.s["staff"], t.ses), pc(b.s["staff"], b.ses)
+    if tr is None or br is None or abs(tr - br) < 5:
+        return None
+    known = [lg for lg in t.lang if b.lang.get(lg)]
+    cov = sum(t.lang[lg] for lg in known)
+    if cov < t.ses * 0.8:                     # 今天的语言在基线期没见过，套不过去
+        return None
+    expn = sum(t.lang[lg] * b.lang_staff[lg] / b.lang[lg] for lg in known)
+    exp, obs = pc(expn, t.ses), t.s["staff"]
+    mix = "、".join("%s %.0f%%→%.0f%%" % (lg, pc(b.lang[lg], b.ses), pc(t.lang[lg], t.ses))
+                    for lg in ("es", "en", "zh") if lg in known)
+    # 按百分点卡阈值在这个样本量下没意义（5 个会话和 9 个会话差 6 个百分点）。
+    # 拿计数比：泊松噪声大约 sqrt(预期)，两倍以内就当没动
+    noise = 2 * math.sqrt(max(expn, 1.0))
+    if abs(obs - expn) <= noise:
+        return Fin("info", "「给服务员看」的变化是客群变了，不是按钮变难找了",
+                   "今天 %.0f%%，基线 %.0f%%。但按基线期各语言自己的使用率套到今天的语言"
+                   "构成上，预期 %.1f 个会话，实际 %d 个，差在噪声范围内（±%.1f）。"
+                   "构成变化：%s。这个按钮主要是非西语客人在用，一拨外国团就能把它顶上去，"
+                   "第二天看着就像「掉下来了」。" % (tr, br, expn, obs, noise, mix))
+    return Fin("warn", "「给服务员看」真的变了",
+               "今天 %.0f%%，基线 %.0f%%。按语言构成算预期 %.1f 个会话，实际 %d 个，"
+               "超出噪声范围（±%.1f）——构成解释不了。值得看看那个按钮是不是被什么挡住了。"
+               % (tr, br, expn, obs, noise))
 
 
 @rule
@@ -940,7 +976,12 @@ def render(ctx):
         bn = bs.ses if key is None else bs.s[key]
         v = pc(n, t.ses)
         bv = pc(bn, bs.ses)
-        rows.append((lab, v, "%d 个会话%s" % (n, "" if bv is None else " · 基线 %.0f%%" % bv)))
+        extra = ""
+        if key == "staff" and t.s["add"]:
+            # 这一格的分母其实是上一格：按钮在「清单」卡里，没建清单看不到
+            extra = "，占建了清单的 %.0f%%" % pc(n, t.s["add"])
+        rows.append((lab, v, "%d 个会话%s%s"
+                     % (n, extra, "" if bv is None else " · 基线 %.0f%%" % bv)))
     h.append(hbars(rows, "%", width_of=lambda v: (v or 0) / 100.0))
 
     h.append("<h2>哪个区域在卖货</h2>")
