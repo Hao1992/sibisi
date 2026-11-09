@@ -1,6 +1,10 @@
 // 菜单统计收集器（第 0 期）。只认三个事件，不碰 IP，不发 cookie。
 // 部署：见 README.md
 
+// 看板。所有指标和结论都在 dash.js 的函数层里，这个文件只负责把事实从 D1 搬出来。
+// wrangler 部署时会把它和 names.gen.js 一起打包进来
+import { dashboard } from "./dash.js";
+
 // 白名单之外的事件名服务端一律丢掉。菜单那边加新埋点，这里要同步加
 const NAMES = new Set([
   "open", "lang", "staff",                      // 第 0 期：会话层
@@ -52,6 +56,9 @@ export default {
     }
     if (url.pathname === "/r" && req.method === "GET") {
       return rollup(url, env);
+    }
+    if (url.pathname === "/d" && req.method === "GET") {
+      return dash(url, env);
     }
     return new Response("sibisi-stats", { status: 200 });
   },
@@ -231,6 +238,36 @@ async function stats(url, env) {
 // 一条 SQL，按「会话 × 事件名 × 值 × 来源」分组，剩下的全交给 dash.py 的函数层去算。
 // 为什么不在这儿算：聚合写进 SQL 就等于把公式焊死在服务端，改一个口径要重新部署；
 // 而且 /s 已经演示过那条路——每加一个看法就要加一句 SQL。这个口只负责把事实搬出来。
+const window_days = (url) =>
+  Math.min(Math.max(parseInt(url.searchParams.get("d") || "14", 10) || 14, 1), 90);
+
+// 看数据的口令。单独一个 DASH_TOKEN 是给手机书签用的——存在浏览器历史里，
+// 想换就换，不影响电脑上那些脚本。没设的话 TOKEN 也认（两个口令都只能读）
+const can_read = (url, env) => {
+  const k = url.searchParams.get("k");
+  return !!k && ((!!env.DASH_TOKEN && k === env.DASH_TOKEN) || (!!env.TOKEN && k === env.TOKEN));
+};
+
+// 一条 SQL，按「会话 × 事件名 × 值 × 来源」分组，剩下的全交给 dash.js 的函数层去算。
+// t0 / t1 是这一组事件的上报时间范围，不是发生时间（见 README 的「已知的坑」）。
+// 两个都带出来，才能看出「整个会话一个毫秒落库」这种缓冲一次性清空的情况
+async function raw_counts(env, days) {
+  const q = await env.DB.prepare(
+    `SELECT sid, name, v, src, COUNT(*) AS n, MIN(ts) AS t0, MAX(ts) AS t1,
+            MAX(w) AS w, MAX(country) AS c
+     FROM ev WHERE ts > ?
+     GROUP BY sid, name, v, src`
+  ).bind(Date.now() - days * DAY).all();
+
+  // 行用数组而不是对象：同样的数据省掉一半体积，列名在 cols 里给出
+  return {
+    dias: days,
+    gen: Date.now(),
+    cols: ["sid", "name", "v", "src", "n", "t0", "t1", "w", "c"],
+    rows: q.results.map((r) => [r.sid, r.name, r.v, r.src, r.n, r.t0, r.t1, r.w, r.c]),
+  };
+}
+
 async function rollup(url, env) {
   const json = (o, s = 200) =>
     new Response(JSON.stringify(o), {
@@ -238,26 +275,51 @@ async function rollup(url, env) {
       headers: { "Content-Type": "application/json; charset=utf-8" },
     });
 
-  if (!env.TOKEN || url.searchParams.get("k") !== env.TOKEN) {
-    return json({ error: "nope" }, 401);
+  if (!can_read(url, env)) return json({ error: "nope" }, 401);
+  return json(await raw_counts(env, window_days(url)));
+}
+
+// 算好的页面在这个 isolate 里留 5 分钟。Cache API 在 workers.dev 上不生效，
+// 所以就用个模块级变量：连点几下只算一遍，冷启动顶多多算一次
+let HOT = null;
+const HOT_MS = 5 * 60 * 1000;
+
+// /d?k=口令&d=天数 —— 整页看板。打开就是当下的数字，不用在本地跑任何东西
+async function dash(url, env) {
+  const page = (body, cached) =>
+    new Response(body, {
+      headers: {
+        "Content-Type": "text/html; charset=utf-8",
+        // 自己缓存 5 分钟就够了，别让浏览器再存一份旧的
+        "Cache-Control": "no-store",
+        "X-Robots-Tag": "noindex, nofollow",
+        "X-Dash-Cache": cached ? "hit" : "miss",
+      },
+    });
+
+  if (!can_read(url, env)) {
+    return new Response("nope", { status: 401, headers: { "Content-Type": "text/plain" } });
   }
-  const days = Math.min(Math.max(parseInt(url.searchParams.get("d") || "14", 10) || 14, 1), 90);
-  const since = Date.now() - days * DAY;
+  const days = window_days(url);
+  // bare=1：页面里不放换窗口的链接，也就不会把口令写进 HTML。
+  // dash.sh 存离线那份时用它——存在硬盘上的文件不该带着口令
+  const bare = url.searchParams.get("bare") === "1";
+  const now = Date.now();
+  if (HOT && HOT.days === days && HOT.bare === bare && now - HOT.t < HOT_MS) {
+    return page(HOT.body, true);
+  }
 
-  // t0 / t1 是这一组事件的上报时间范围，不是发生时间（见 README 的「已知的坑」）。
-  // 两个都带出来，dash.py 那边才能看出「整个会话一个毫秒落库」这种缓冲一次性清空的情况
-  const q = await env.DB.prepare(
-    `SELECT sid, name, v, src, COUNT(*) AS n, MIN(ts) AS t0, MAX(ts) AS t1,
-            MAX(w) AS w, MAX(country) AS c
-     FROM ev WHERE ts > ?
-     GROUP BY sid, name, v, src`
-  ).bind(since).all();
-
-  // 行用数组而不是对象：同样的数据省掉一半体积，列名在 cols 里给出
-  return json({
-    dias: days,
-    gen: Date.now(),
-    cols: ["sid", "name", "v", "src", "n", "t0", "t1", "w", "c"],
-    rows: q.results.map((r) => [r.sid, r.name, r.v, r.src, r.n, r.t0, r.t1, r.w, r.c]),
-  });
+  const data = await raw_counts(env, days);
+  // 一页算挂了也要说清是哪儿挂的，不要给个空白页
+  let body;
+  try {
+    body = dashboard(data, { days, token: bare ? null : url.searchParams.get("k") });
+  } catch (e) {
+    return new Response(
+      "看板算挂了：" + ((e && e.stack) || e) + "\n\n原始计数还能拿：/r?k=…&d=" + days,
+      { status: 500, headers: { "Content-Type": "text/plain; charset=utf-8" } }
+    );
+  }
+  HOT = { days, bare, t: now, body };
+  return page(body, false);
 }

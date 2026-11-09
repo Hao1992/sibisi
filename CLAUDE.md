@@ -19,6 +19,7 @@ Valencia 的 Sibisi Ramen（食必思）三语（西 / 英 / 中）手机菜单�
 ## 改动流程
 1. 改 `source/data.py` 或 `source/det.py`（价格是 `d("菜号", 中文名, 西语名, 英文名, 价格, ...)` 的第 5 个参数）
 2. `python3 source/build.py`，输出里 `missing images` 应为 `none`
+   （它同时会重写 `collector/names.gen.js`，这份是看板用的菜名表）
 3. 用 grep 核对 `index.html` 里确实是新值，再 `git commit` + `git push`
 4. Pages 部署需 1–3 分钟；查看时可加 `?v=数字` 绕过缓存
 
@@ -37,15 +38,23 @@ Valencia 的 Sibisi Ramen（食必思）三语（西 / 英 / 中）手机菜单�
 - 会话 id 只在内存里，统计不写 cookie 也不写 localStorage；IP 不入库
 - 加新事件时在 `worker.js` 的 `NAMES` 白名单里同步加，否则会被服务端丢掉；
   新增区域要三处同步：`app.js.tpl` 的 `SRC`、`worker.js` 的 `SRCS`、`_names.py` 的 `SRCN`
+- 菜名、价格、来源名由 `build.py` 从 `data.py` 导出到 `collector/names.gen.js`（**不要手改**），
+  看板读它——Worker 读不到 `data.py`。改了菜单要 `build.py` + `wrangler deploy`，
+  看板上的名字才跟着变（只影响显示，不影响数字）
 - 页面上任何新的「加进清单」入口，容器 id 必须进 `SRC` 表，否则来源会落成空值
 - 已部署：`https://sibisi-stats.cartaviva.workers.dev`，`STATS` 已填，线上在收数据
-- **平时看数据跑 `collector/dash.sh`**：生成 `collector/out/dashboard.html` 并打开。
-  指标和结论都是 `dash.py` 里注册的函数（`@metric` / `@rule`），加一个指标只要加个函数，
-  卡片和走势图自动跟着出来；阈值写死在结论函数里，所以「多少算异常」是提前定好的。
-  三层结构和加指标的写法见 `collector/README.md` 的「看板是怎么搭的」
-- 看板走 Worker 的 `/r` 口（只按会话分组的原始计数，不做分析），终端报表走 `/s` 口（服务端聚合好的）
-- 终端报表：`collector/stats.sh`（口令在 macOS 钥匙串里，服务名 `sibisi-stats-token`）
-- 口令不进任何文件，也不写进生成的 HTML；`collector/out/` 不进 git
+- **看板是一个网址**：Worker 的 `/d?k=<DASH_TOKEN>` 口，整页在服务端现算，打开就是当下的
+  数字，手机存书签就行，不用在本地跑任何东西（算好的那份在同一个 isolate 里留 5 分钟）。
+  `collector/dash.sh` 只是从钥匙串取口令帮你开浏览器，`dash.sh 14 s` 存一份离线的
+- 指标和结论都是 `collector/dash.js` 里注册的函数（`metric()` / `rule()`），加一个指标只要
+  加个函数，卡片和走势图自动跟着出来；阈值写死在结论函数里，所以「多少算异常」是提前定好的。
+  **改了 `dash.js` 要 `npx wrangler deploy` 才生效**；三层结构和本地试跑的办法见
+  `collector/README.md` 的「看板是怎么搭的」
+- `worker.js` 只把事实从 D1 搬出来，不做分析：`/d` 整页看板、`/r` 原始计数、
+  `/s` 服务端聚合好的（终端报表 `collector/stats.sh` 走这个）
+- 两个口令：`TOKEN` 给脚本（钥匙串服务名 `sibisi-stats-token`）、`DASH_TOKEN` 给手机上的
+  看板书签（`sibisi-dash-token`）。都只能读聚合数字。口令不进任何文件，也不写进生成的
+  HTML；`collector/out/` 不进 git
 - 原始事件只留 90 天，Worker 每天定时清理一次
 - 细节见 `collector/README.md`
 

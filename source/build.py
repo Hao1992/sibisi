@@ -57,4 +57,18 @@ for f in ("app.js.tpl", "head2.part", "illo.part"):
         if lit in src:
             sys.exit("source/%s 里又写死了电话号码 %r。号码只放 data.py 的 TEL" % (f, lit))
 
+# 看板跑在 Worker 里（JS），读不到 data.py，所以菜名、价格、来源名在这儿导出一份给它。
+# 提取逻辑和终端报表共用 collector/_names.py，两边的名字一定是一样的。
+sys.path.insert(0, os.path.join(HERE, "..", "collector"))
+import _names as _n
+_J = lambda o: json.dumps(o, ensure_ascii=False, sort_keys=True)
+_gen = os.path.join(HERE, "..", "collector", "names.gen.js")
+open(_gen, "w", encoding="utf-8").write(
+    "// 由 source/build.py 从 source/data.py 生成，**不要手改**。\n"
+    "// 看板（collector/dash.js）跑在 Worker 里读不到 data.py，所以名字和价格在这儿存一份。\n"
+    "// 改了菜单要 build.py + wrangler deploy，看板上的名字才跟着变（只影响显示，不影响数字）。\n"
+    "export const NAME = %s;\nexport const PRICE = %s;\n"
+    "export const DEFAULT_DRINK = %s;\nexport const SRCN = %s;\nexport const WITH_IMP = %s;\n"
+    % (_J(_n.NAME), _J(_n.PRICE), _J(list(_n.DEFAULT_DRINK)), _J(_n.SRCN), _J(list(_n.WITH_IMP))))
+
 print("built index.html", "| missing images:", missing or "none", "| missing thumbs:", nothumb or "none")

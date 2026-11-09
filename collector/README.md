@@ -87,8 +87,9 @@
 |---|---|
 | Worker | `https://sibisi-stats.cartaviva.workers.dev` |
 | 收集口 | `/c`（已填进 `source/data.py` 的 `STATS`） |
+| 看板 | `/d?k=<DASH_TOKEN>&d=<天数>`（整页 HTML，打开就是当下的数字） |
 | 报表口 | `/s?k=<TOKEN>&d=<天数>`（终端报表用，服务端已经聚合好） |
-| 原始计数口 | `/r?k=<TOKEN>&d=<天数>`（看板用，只按会话分组，不做任何分析） |
+| 原始计数口 | `/r?k=<TOKEN>&d=<天数>`（只按会话分组的原始计数，不做任何分析） |
 | D1 数据库 | `sibisi` |
 | 定时清理 | 每天 04:17 UTC |
 
@@ -121,15 +122,30 @@ Cloudflare 才会分配 `*.workers.dev` 子域名，否则 `deploy` 会报 subdo
 
 ### 看板（平时看这个）
 
-```bash
-~/git/sibisi/collector/dash.sh
+**看板就是一个网址**，手机上存成书签，打开就是当下的数字——不用电脑，不用命令行：
+
+```
+https://sibisi-stats.cartaviva.workers.dev/d?k=<DASH_TOKEN>
 ```
 
-拉数据、算指标、生成 `collector/out/dashboard.html` 并打开。默认最近 14 天，
-`dash.sh 30` 看 30 天，`dash.sh 14 x` 只生成不打开。口令从钥匙串取，
-不用手输，不进 shell 历史，也**不会写进生成的 HTML**。
+页面上有 7 / 14 / 30 天三个切换。整页在 Worker 里现算，算好的那份在同一个
+isolate 里留 5 分钟（Cache API 在 workers.dev 上不生效，所以用的是模块级变量：
+连点几下只算一遍，冷启动顶多多算一次）。页面顶上写着是几点算的。
 
-生成的是**快照**：数字不会自己更新，想看最新的就再跑一次。页面顶上写着生成时间。
+`DASH_TOKEN` 是看板**专用**的口令，和脚本用的 `TOKEN` 分开——它要进手机的浏览器
+历史，想换就换，不影响电脑上那些脚本。两个口令都只能读，读到的也只有聚合数字，
+没有 IP、没有任何能认出客人的东西。没设 `DASH_TOKEN` 的话 `/d` 也认 `TOKEN`。
+
+懒得找书签的话：
+
+```bash
+~/git/sibisi/collector/dash.sh        # 从钥匙串取口令，直接开浏览器
+~/git/sibisi/collector/dash.sh 30     # 30 天
+~/git/sibisi/collector/dash.sh 14 s   # 不开浏览器，存一份到 out/（离线留档）
+```
+
+存下来那份走的是 `&bare=1`：页面里不放换窗口的链接，所以**口令不会写进 HTML**。
+
 `out/` 不进 git。
 
 ### 终端报表
@@ -145,30 +161,49 @@ Cloudflare 才会分配 `*.workers.dev` 子域名，否则 `deploy` 会报 subdo
 
 ## 看板是怎么搭的
 
-`dash.py` 分三层，改东西只动对应那一层：
+`dash.js` 分三层，改东西只动对应那一层。它跟着 `worker.js` 一起部署，
+所以**改完要 `npx wrangler deploy`** 才生效。
 
 | 层 | 在哪 | 干什么 |
 |---|---|---|
-| 聚合 | `Bucket` / `Ctx` | 把会话按「业务日 × 午市/晚市」归堆，只做计数，不下结论 |
-| 公式 | `@metric` 的函数 | 一个指标一个函数：输入一个 Bucket，输出一个数 |
-| 结论 | `@rule` 的函数 | 一条结论一个函数：输入整段数据，输出一句话或者 `None` |
+| 聚合 | `Ses` / `Bucket` / `Ctx` | 把会话按「业务日 × 午市/晚市」归堆，只做计数，不下结论 |
+| 公式 | `metric(...)` 注册的函数 | 一个指标一个函数：输入一个 Bucket，输出一个数 |
+| 结论 | `rule(...)` 注册的函数 | 一条结论一个函数：输入整段数据，输出一句话或者 `null` |
+
+`worker.js` 只负责把事实从 D1 搬出来（`raw_counts`，一条 SQL），一点分析都不做。
+聚合写进 SQL 就等于把公式焊死在服务端，改一个口径要动数据库那一层。
 
 **加一个指标**：在公式层写个函数就行，卡片、走势图、和基线的对比全自动跟着出来。
 
-```python
-@metric("pair_rate", "用了推荐搭配", "%", good="up", note="详情页那个「整套加入」")
-def _m_pair(b):
-    return Frac(b.s["pair"], b.s["det"])
+```js
+metric("pair_rate", "用了推荐搭配",
+  { unit: "%", note: "详情页那个「整套加入」" },
+  (b) => F(b.sv("pair"), b.sv("det")));
 ```
+
+页面最后那段「这些数是怎么算的」是拿 `fn.toString()` 把箭头右边那截直接印出来的，
+所以**公式不会和算的不一样**——别把它另抄一份。
 
 **加一条结论**：在结论层写个函数，阈值写死在函数里。满足条件它才出现。
 
+**改之前先在本地跑一遍**，不用部署：
+
+```bash
+cd collector
+T=$(security find-generic-password -a sibisi-stats -s sibisi-stats-token -w)
+curl -sS "https://sibisi-stats.cartaviva.workers.dev/r?k=$T&d=14" > /tmp/raw.json; unset T
+node --input-type=module -e 'import fs from "node:fs";
+  const m = await import("./dash.js");
+  fs.writeFileSync("/tmp/d.html", m.dashboard(JSON.parse(fs.readFileSync("/tmp/raw.json","utf8")), {days:14}));'
+open /tmp/d.html
+```
+
 几个口径上的讲究，别绕过去：
 
-- 比率一律返回 `Frac(分子, 分母)`，不直接返回百分数。分母带着走，引擎才能在
+- 比率一律返回 `F(分子, 分母)`，不直接返回百分数。分母带着走，引擎才能在
   分母太小的时候直接不出数——否则 1/1 会变成一条「100%」的假结论挂在页面上。
   门槛是每个指标自己的 `min_b`。
-- **计数型指标**（会话数这种）要写 `per_day=True`，当基线用的时候除以天数，
+- **计数型指标**（会话数这种）要写 `per_day: true`，当基线用的时候除以天数，
   不然等于拿一天去比一整周。
 - **基线按今天实际有的档口取**。今天只开过午市就只拿前几天的午市比，
   不然周日下午看板会显示「比昨天少一半」——其实只是晚市还没开。
@@ -219,7 +254,7 @@ Workers 每天 10 万请求，D1 每天 10 万行写入、5 GB 存储。
 2026-11-06 午市 43 个会话里有 13 个德国人，其中 6 个在 14:34–14:41 七分钟内先后
 点了「给服务员看」，那一场冲到 23%；后面四场都在 8–13%，看着像一路下滑。
 按语言拆开就没有下滑了：西语客人一直是 5–11%，一次没动过。
-`dash.py` 里 `_r_staff_mix` 这条结论专门盯这个——拿基线期各语言自己的使用率套到今天的
+`dash.js` 里 `_r_staff_mix` 这条结论专门盯这个——拿基线期各语言自己的使用率套到今天的
 语言构成上，算出预期会话数，和实际差在 2×√预期 以内就判定「是客群变了，不是按钮出了问题」。
 样本这么小的时候**不要按百分点卡阈值**：5 个会话和 9 个会话差 6 个百分点，但那就是噪声。
 
