@@ -279,47 +279,57 @@ async function rollup(url, env) {
   return json(await raw_counts(env, window_days(url)));
 }
 
-// 算好的页面在这个 isolate 里留 5 分钟。Cache API 在 workers.dev 上不生效，
-// 所以就用个模块级变量：连点几下只算一遍，冷启动顶多多算一次
-let HOT = null;
-const HOT_MS = 5 * 60 * 1000;
+// 这里**没有缓存**，每次打开都现算一遍。试过两种都不行：
+// Cache API 在 workers.dev 上不生效；模块级变量也靠不住，Cloudflare 常常
+// 给每个请求一个新的 isolate，实测几乎次次 miss。与其留个半真半假的缓存，
+// 不如没有——「刷新一下就是最新的」这句话才成立。
+// 代价是每次打开查一次 D1。现在一次几千行，离免费额度（每天 500 万行）很远；
+// 真到了那一步，正经做法是在 D1 里开张 cache 表，不是再试一次模块变量。
+
+// 头部卡片覆盖几天：1 = 今天，其余是「最近 N 天」
+const RANGES = [1, 3, 7, 30];
+const head_range = (url) => {
+  const r = parseInt(url.searchParams.get("r") || "1", 10);
+  return RANGES.includes(r) ? r : 1;
+};
+// 要拉多少天的数据：头部那一段 + 同样长的基线 + 一点余量（周四休息之类）
+const need_days = (url, range) => {
+  const given = url.searchParams.get("d");
+  if (given) return window_days(url);
+  return Math.min(Math.max(2 * range + 7, 14), 90);
+};
 
 // /d?k=口令&d=天数 —— 整页看板。打开就是当下的数字，不用在本地跑任何东西
 async function dash(url, env) {
-  const page = (body, cached) =>
+  const page = (body) =>
     new Response(body, {
       headers: {
         "Content-Type": "text/html; charset=utf-8",
-        // 自己缓存 5 分钟就够了，别让浏览器再存一份旧的
+        // 每次都现算，浏览器也别存旧的——不然「刷新」会骗人
         "Cache-Control": "no-store",
         "X-Robots-Tag": "noindex, nofollow",
-        "X-Dash-Cache": cached ? "hit" : "miss",
       },
     });
 
   if (!can_read(url, env)) {
     return new Response("nope", { status: 401, headers: { "Content-Type": "text/plain" } });
   }
-  const days = window_days(url);
-  // bare=1：页面里不放换窗口的链接，也就不会把口令写进 HTML。
+  const range = head_range(url);
+  const days = need_days(url, range);
+  // bare=1：页面里不放换区间的链接，也就不会把口令写进 HTML。
   // dash.sh 存离线那份时用它——存在硬盘上的文件不该带着口令
   const bare = url.searchParams.get("bare") === "1";
-  const now = Date.now();
-  if (HOT && HOT.days === days && HOT.bare === bare && now - HOT.t < HOT_MS) {
-    return page(HOT.body, true);
-  }
 
   const data = await raw_counts(env, days);
   // 一页算挂了也要说清是哪儿挂的，不要给个空白页
   let body;
   try {
-    body = dashboard(data, { days, token: bare ? null : url.searchParams.get("k") });
+    body = dashboard(data, { days, range, token: bare ? null : url.searchParams.get("k") });
   } catch (e) {
     return new Response(
       "看板算挂了：" + ((e && e.stack) || e) + "\n\n原始计数还能拿：/r?k=…&d=" + days,
       { status: 500, headers: { "Content-Type": "text/plain; charset=utf-8" } }
     );
   }
-  HOT = { days, bare, t: now, body };
-  return page(body, false);
+  return page(body);
 }

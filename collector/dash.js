@@ -200,9 +200,10 @@ export function load(d) {
   return [...ses.values()].sort((a, b) => a.t0 - b.t0);
 }
 
-// 聚合结果 + 取数的口子。公式层和结论层都只跟它打交道
+// 聚合结果 + 取数的口子。公式层和结论层都只跟它打交道。
+// range = 头部那组卡片覆盖几天：1 就是「今天」，3/7/30 是「最近 N 天」
 export class Ctx {
-  constructor(meta, sessions) {
+  constructor(meta, sessions, range = 1) {
     this.meta = meta;
     this.sessions = sessions;
     this.svcb = C();
@@ -227,17 +228,39 @@ export class Ctx {
     // 今天只开了午市的话，拿昨天**整天**比就是拿半天比一天。
     // 基线按今天实际有的档口取，才是同口径
     this.today_day = this.daylist.length ? this.daylist[this.daylist.length - 1] : null;
-    const here = new Set(this.pairs.filter((p) => p[0] === this.today_day).map((p) => p[1]));
-    this.svcs = ["午市", "晚市"].filter((s) => here.has(s));
-    if (!this.svcs.length) this.svcs = ["午市"];
     const prev = this.daylist.filter((d) => d !== this.today_day);
     this.prev_day = prev.length ? prev[prev.length - 1] : null;
-    this.today = this.pick([this.today_day], this.svcs);
-    this.prev = this.prev_day ? this.pick([this.prev_day], this.svcs) : new Bucket();
-    this.base_days = prev.filter((d) => this.live_days.includes(d)).slice(-BASE_DAYS);
-    this.base = this.pick(this.base_days, this.svcs);
-    this.partial = this.svcs.length < 2
+    // 最后一天只有午市，而那天本来该有晚市 = 这一天还没过完
+    const here = new Set(this.pairs.filter((p) => p[0] === this.today_day).map((p) => p[1]));
+    const open_svcs = ["午市", "晚市"].filter((x) => here.has(x));
+    this.half_today = open_svcs.length < 2
       && ["周五", "周六", "周日"].includes(wday(this.today_day));
+
+    this.range = range;
+    if (range <= 1) {
+      // 「今天」：按今天实际开过的档口取基线。今天只开了午市的话，拿昨天**整天**比
+      // 就是拿半天比一天
+      this.svcs = open_svcs.length ? open_svcs : ["午市"];
+      this.head_days = [this.today_day];
+      this.base_days = prev.filter((d) => this.live_days.includes(d)).slice(-BASE_DAYS);
+      this.word = "今天";
+      this.label = this.today_day + " 的" + this.svcs.join("/");
+    } else {
+      // 「最近 N 天」：整天对整天，所以只数正常营业的日子（会话 ≥5），
+      // 周四休息和今天早上那种还没开门的半天都不算一天
+      this.svcs = ["午市", "晚市"];
+      this.head_days = this.live_days.slice(-range);
+      const before = this.live_days.slice(0, Math.max(0, this.live_days.length - range));
+      this.base_days = before.slice(-range);
+      this.word = "这 " + range + " 天";
+      this.label = "最近 " + range + " 天";
+    }
+    this.span = this.head_days.length || 1;
+    this.today = this.pick(this.head_days, this.svcs);
+    this.prev = this.prev_day ? this.pick([this.prev_day], this.svcs) : new Bucket();
+    this.base = this.pick(this.base_days, this.svcs);
+    // 「拿半天比整天」只有看「今天」时才会发生
+    this.partial = range <= 1 && this.half_today;
   }
 
   pick(days, svcs) {
@@ -257,12 +280,21 @@ export class Ctx {
   raw(key, b) { return MBY[key].fn(b); }
   val(key, b) { return value(MBY[key], MBY[key].fn(b)); }
 
-  // 基线值。计数型指标要除以天数，不然等于拿一天去比一整周
-  base_val(key) {
+  // 头部那组卡片的值。计数型指标一律摊成「每天」，不然选了 3 天会话数看着像翻三倍
+  head_val(key) {
     const m = MBY[key];
-    let v = value(m, m.fn(this.base));
-    if (v !== null && m.per_day && this.base_days.length) v /= this.base_days.length;
-    return v;
+    const v = value(m, m.fn(this.today));
+    return v !== null && m.per_day ? v / this.span : v;
+  }
+
+  // 基线值。同样摊成每天，不然等于拿一天去比一整周。
+  // 一天基线都没有的时候要还 null——计数型指标会老老实实算出个 0，
+  // 那会变成「比基线涨了 99」这种假结论
+  base_val(key) {
+    if (!this.base_days.length) return null;
+    const m = MBY[key];
+    const v = value(m, m.fn(this.base));
+    return v !== null && m.per_day ? v / this.base_days.length : v;
   }
 }
 
@@ -377,7 +409,7 @@ rule(function _r_partial(c) {
 // 看板是活的，所以早上打开时「今天」可能才几个会话——这时候所有卡片都是「—」，
 // 得直接说清楚，并且把昨天的数报出来，免得白跑一趟
 rule(function _r_early(c) {
-  if (c.today.ses >= 5 || !c.prev_day) return null;
+  if (c.range > 1 || c.today.ses >= 5 || !c.prev_day) return null;
   const p = c.day[c.prev_day];
   const bits = [["扫码会话", "ses"], ["建了清单", "add_rate"], ["菜单正文转化", "menu_conv"]]
     .map(([lab, key]) => lab + " " + fmt(c.val(key, p), MBY[key]))
@@ -388,9 +420,19 @@ rule(function _r_early(c) {
     + c.prev_day + "（" + wday(c.prev_day) + "）：" + bits + "。");
 });
 
+// 「最近 30 天」在只开了一周的店里就是「最近 3 天」。标题上看不出来，得说一声
+rule(function _r_short_range(c) {
+  if (c.range <= 1 || c.span >= c.range) return null;
+  return Fin("warn", "其实只有 " + c.span + " 个营业日",
+    "你选的是最近 " + c.range + " 天，但目前只攒到 " + c.span + " 个正常营业的日子（"
+    + c.head_days[0] + " 起）。卡片算的是这 " + c.span + " 天"
+    + (c.base_days.length ? "" : "，再往前没有可比的日子，所以没有基线")
+    + "。周四休息和还没开门的半天不算一天。");
+});
+
 rule(function _r_sample(c) {
   if (c.today.ses >= 25 || c.today.ses < 5) return null;   // 比 5 还少的归上面那条管
-  return Fin("warn", "今天样本小",
+  return Fin("warn", c.word + "样本小",
     "只有 " + c.today.ses + " 个会话。这个量级下单项指标的涨跌基本是噪声，"
     + "看「哪个区域在卖货」那段的全期合计更稳。");
 });
@@ -432,8 +474,8 @@ rule(function _r_menu_move(c) {
   const d = t - b;
   if (Math.abs(d) < 8) return null;
   return Fin(d > 0 ? "good" : "warn", "菜单正文转化" + (d > 0 ? "变好" : "变差") + "了",
-    "今天 " + fx(t, 0) + "%，前 " + c.base_days.length + " 天同档口（" + c.svcs.join("/")
-    + "）的基线 " + fx(b, 0) + "%，差 " + sgn(d, 0) + " 个百分点。");
+    c.word + " " + fx(t, 0) + "%，前 " + c.base_days.length + " 天同档口（"
+    + c.svcs.join("/") + "）的基线 " + fx(b, 0) + "%，差 " + sgn(d, 0) + " 个百分点。");
 });
 
 // 午市和晚市是两种客群：赶时间的，和坐下来吃的。混成「今天」会把两边都看糊
@@ -519,13 +561,13 @@ rule(function _r_staff_mix(c) {
   const noise = 2 * Math.sqrt(Math.max(expn, 1));
   if (Math.abs(obs - expn) <= noise) {
     return Fin("info", "「给服务员看」的变化是客群变了，不是按钮变难找了",
-      "今天 " + fx(tr, 0) + "%，基线 " + fx(br, 0) + "%。但按基线期各语言自己的使用率"
-      + "套到今天的语言构成上，预期 " + fx(expn, 1) + " 个会话，实际 " + obs
+      c.word + " " + fx(tr, 0) + "%，基线 " + fx(br, 0) + "%。但按基线期各语言自己的"
+      + "使用率套到这一段的语言构成上，预期 " + fx(expn, 1) + " 个会话，实际 " + obs
       + " 个，差在噪声范围内（±" + fx(noise, 1) + "）。构成变化：" + mix
       + "。这个按钮主要是非西语客人在用，一拨外国团就能把它顶上去，第二天看着就像「掉下来了」。");
   }
   return Fin("warn", "「给服务员看」真的变了",
-    "今天 " + fx(tr, 0) + "%，基线 " + fx(br, 0) + "%。按语言构成算预期 " + fx(expn, 1)
+    c.word + " " + fx(tr, 0) + "%，基线 " + fx(br, 0) + "%。按语言构成算预期 " + fx(expn, 1)
     + " 个会话，实际 " + obs + " 个，超出噪声范围（±" + fx(noise, 1)
     + "）——构成解释不了。值得看看那个按钮是不是被什么挡住了。");
 });
@@ -591,12 +633,12 @@ rule(function _r_top_dish(c) {
   const old = new Set(top(prev, 5).map((r) => r[0]));
   const fresh = top(t, 3).map((r) => r[0]).filter((k) => !old.has(k) && !gv(prev, k));
   const [code, n] = top(t, 1)[0];
-  let txt = "今天加得最多的是 " + code + " " + dname(code) + "（" + n + " 次）。";
+  let txt = c.word + "加得最多的是 " + code + " " + dname(code) + "（" + n + " 次）。";
   if (fresh.length) {
-    txt += "没在前几天前五里出现过的新面孔："
+    txt += "没在上一段前五里出现过的新面孔："
       + fresh.map((k) => k + " " + dname(k)).join("、") + "。";
   }
-  return Fin("info", "今天的菜品榜", txt);
+  return Fin("info", c.word + "的菜品榜", txt);
 });
 
 // ── 4. 画图 ──────────────────────────────────────────────────────────────
@@ -763,6 +805,8 @@ h3{font-size:13px;margin:18px 0 8px;color:var(--mut);font-weight:700;letter-spac
 .nav a{font-size:13px;padding:4px 11px;border-radius:99px;text-decoration:none;
  background:var(--card);border:1px solid var(--line);color:var(--mut)}
 .nav a.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.nav a.go{margin-left:auto;font-weight:700;color:var(--fg)}
+.c .v small{font-size:12px;font-weight:600;color:var(--mut);margin-left:1px}
 .cards{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(152px,1fr));
  margin-top:14px}
 .c{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:11px 12px}
@@ -842,7 +886,7 @@ function cards(ctx) {
   const nb = ctx.base_days.length;
   for (const m of METRICS) {
     const f = m.fn(ctx.today);
-    const t = value(m, f);
+    const t = ctx.head_val(m.key);
     const b = ctx.base_val(m.key);
     const d = t === null || b === null ? null : t - b;
     const bf = m.fn(ctx.base);
@@ -860,9 +904,11 @@ function cards(ctx) {
       }
     }
     const bits = [fracTxt(f), "基线 " + fmt(b, m) + (m.per_day ? "/天" : "")].filter(Boolean);
+    const vtxt = fmt(t, m)
+      + (m.per_day && t !== null && ctx.span > 1 ? "<small>/天</small>" : "");
     out.push('<div class="c" title="'
       + esc(m.note + "（基线 = 前 " + nb + " 天的同档口）") + '"><div class="k">'
-      + esc(m.name) + '</div><div class="v">' + fmt(t, m) + '</div><div class="d ' + cls
+      + esc(m.name) + '</div><div class="v">' + vtxt + '</div><div class="d ' + cls
       + '">' + esc(lab) + '</div><div class="b">' + esc(bits.join(" · ")) + "</div></div>");
   }
   out.push("</div>");
@@ -912,7 +958,7 @@ export function render(ctx, o = {}) {
   const sv = (s) => days.map((d) => ctx.svcSes(d, s));
   const gen = new Date(Date.now() + TZ * 1000).toISOString().slice(5, 16).replace("T", " ");
   const svcs = ctx.svcs.join("/");
-  const partial = ctx.partial ? "最后一天还没过完。" : "";
+  const partial = ctx.half_today ? "最后一天还没过完。" : "";
   const a = ctx.all, t = ctx.today, bs = ctx.base;
 
   const h = ['<!doctype html><html lang="zh"><head><meta charset="utf-8">'
@@ -924,18 +970,31 @@ export function render(ctx, o = {}) {
   h.push('<p class="sub">' + esc(days[0]) + " – " + esc(days[days.length - 1]) + "（"
     + days.length + " 天有数据，共 " + a.ses + " 个会话 / " + a.ev + " 条事件）</p>");
   if (o.token) {
-    h.push('<div class="nav">' + [7, 14, 30].map((n) => '<a class="'
-      + (n === o.days ? "on" : "") + '" href="?k=' + encodeURIComponent(o.token) + "&d=" + n
-      + '">' + n + " 天</a>").join("") + "</div>");
+    const k = encodeURIComponent(o.token);
+    const pill = (r, lab) => '<a class="' + (r === ctx.range ? "on" : "") + '" href="?k='
+      + k + "&r=" + r + '">' + lab + "</a>";
+    // 刷新链接带个时间戳：和当前地址不一样，点了一定是一次新请求
+    h.push('<div class="nav">' + pill(1, "今天") + pill(3, "最近 3 天") + pill(7, "最近 7 天")
+      + pill(30, "最近 30 天")
+      + '<a class="go" href="?k=' + k + "&r=" + ctx.range + "&t=" + Date.now()
+      + '">↻ 刷新</a></div>');
   }
-  h.push('<div class="snap">这一页是<b>打开的时候现算的</b>——刷新就是当下的数字，'
-    + "不用跑任何命令。<br>算于 <b>" + esc(gen)
-    + "</b>（最多缓存 5 分钟，所以这个时间可能比现在早几分钟）。"
-    + "卡片上的大数字是 <b>" + esc(ctx.today_day) + " 的" + esc(svcs)
-    + "</b>，「基线」是前 " + ctx.base_days.length + " 天的同一档口（" + esc(svcs)
-    + "），所以半天不会拿去跟整天比。</div>");
+  const headTxt = ctx.range > 1 && ctx.head_days.length
+    ? ctx.label + "（" + short(ctx.head_days[0]) + " – "
+      + short(ctx.head_days[ctx.head_days.length - 1]) + "，" + ctx.span + " 个营业日）"
+    : ctx.label;
+  const baseTxt = !ctx.base_days.length ? "再往前没有可比的日子了"
+    : ctx.range > 1
+      ? "「基线」是再往前的 " + ctx.base_days.length + " 个营业日，整天对整天"
+      : "「基线」是前 " + ctx.base_days.length + " 天的同一档口（" + svcs
+        + "），所以半天不会拿去跟整天比";
+  h.push('<div class="snap">这一页是<b>打开的时候现算的</b>，算于 <b>' + esc(gen)
+    + "</b>——这里没有缓存，<b>刷新页面（或者点上面那个 ↻）就是最新的数字</b>。"
+    + "<br>卡片上的大数字是 <b>" + esc(headTxt) + "</b>，" + esc(baseTxt) + "。"
+    + (ctx.range > 1 ? "只数正常营业的日子：周四休息、和还没开门的半天都不算一天。" : "")
+    + "</div>");
 
-  h.push("<h2>今天</h2>");
+  h.push("<h2>" + esc(ctx.range > 1 ? ctx.label : "今天") + "</h2>");
   h.push(cards(ctx));
   h.push("<h2>自动结论</h2>");
   h.push('<p class="note">每条结论是 collector/dash.js 里一个 rule() 函数，阈值提前写死在'
@@ -953,7 +1012,7 @@ export function render(ctx, o = {}) {
     ["节气推荐转化", C_LINE[2], dayb.map((b) => ctx.val("luck_conv", b))],
   ], "线断开 = 那天这个指标没有分母，不是 0。" + partial));
 
-  h.push("<h2>今天的漏斗</h2>");
+  h.push("<h2>" + esc(ctx.word) + "的漏斗</h2>");
   const frows = [];
   for (const [lab, key] of [["打开菜单", null], ["看到菜", "imp"], ["点开详情", "det"],
                             ["建了清单", "add"], ["给服务员看", "staff"]]) {
@@ -996,12 +1055,12 @@ export function render(ctx, o = {}) {
 
   h.push("<h2>菜</h2>");
   const tadd = t.byDish("add");
-  h.push("<h3>今天加进清单最多的</h3>");
+  h.push("<h3>" + esc(ctx.word) + "加进清单最多的</h3>");
   if (keys(tadd).length) {
     h.push(hbars(top(tadd, 8).map(([c, n]) => [c + " " + dname(c), n,
       "看到 " + t.dsv(c, "imp") + " 会话 · 点开 " + t.dsv(c, "det")]), "次"));
   } else {
-    h.push('<p class="note">今天还没有人把菜加进清单。</p>');
+    h.push('<p class="note">' + esc(ctx.word) + "还没有人把菜加进清单。</p>");
   }
   h.push("<h3>全期漏斗（按会话算，前 15）</h3>");
   const codes = [...new Set(keys(a.dishs).map((k) => k.split("\u0001")[0]))]
@@ -1062,5 +1121,5 @@ export function dashboard(data, o = {}) {
     return "<!doctype html><meta charset='utf-8'><p style='font:16px/1.6 sans-serif;"
       + "padding:24px'>这段时间一条数据都没有。</p>";
   }
-  return render(new Ctx(data, sessions), o);
+  return render(new Ctx(data, sessions, o.range || 1), o);
 }
