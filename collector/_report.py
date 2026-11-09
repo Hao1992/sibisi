@@ -7,7 +7,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _names import NAME, SRCN            # noqa: E402
+from _names import NAME, SRCN, canon_drink   # noqa: E402
 
 
 def w(s):
@@ -35,6 +35,20 @@ def bars(rows, k, v, width=16):
     top = max((r[v] for r in rows), default=0) or 1
     for r in rows:
         print("  %-6s %5d  %s" % (r[k], r[v], "█" * max(1, round(r[v] / top * width))))
+
+
+def merge_drinks(rows):
+    """一种饮料有两套 id（推荐那边发短键 "ts"，酒水单发 "dr-beers-3"），
+    不归并的话同一款酒会在榜上出现两行，看着像两种酒。
+
+    这里加的是**会话数**：同一个会话从两处各点一次同一款酒会被数两次。
+    数字小的时候无所谓，要精确就看看板——那边按次数算，归并是准的。"""
+    out = {}
+    for r in rows:
+        out.setdefault(canon_drink(r["bebida"]), 0)
+        out[canon_drink(r["bebida"])] += r["sesiones"]
+    return [{"bebida": k, "sesiones": n}
+            for k, n in sorted(out.items(), key=lambda x: (-x[1], x[0]))]
 
 
 d = json.load(sys.stdin)
@@ -105,7 +119,7 @@ for title, rows, k, v, note in [
      "   ← 这项决定要不要加第四种语言"),
     ("中途切到的语言", d["cambios_de_idioma"], "a_idioma", "veces", ""),
     ("多人套餐", d.get("packs") or [], "pack", "sesiones", ""),
-    ("饮料", d.get("bebidas") or [], "bebida", "sesiones", ""),
+    ("饮料", merge_drinks(d.get("bebidas") or []), "bebida", "sesiones", ""),
     ("访客所在国家", d["paises"], "pais", "sesiones", ""),
 ]:
     if not rows:

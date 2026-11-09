@@ -38,6 +38,8 @@ Valencia 的 Sibisi Ramen（食必思）三语（西 / 英 / 中）手机菜单�
 - 会话 id 只在内存里，统计不写 cookie 也不写 localStorage；IP 不入库
 - 加新事件时在 `worker.js` 的 `NAMES` 白名单里同步加，否则会被服务端丢掉；
   新增区域要三处同步：`app.js.tpl` 的 `SRC`、`worker.js` 的 `SRCS`、`_names.py` 的 `SRCN`
+- **一种饮料有两套 id**：推荐那边发 `DRK` 短键（`ts`），酒水单发 `DR` 的 id（`dr-beers-3`）。
+  统计显示前必须用 `DRKMAP` 归并（`_names.py` 的 `DRCANON`），否则同一款酒在榜上两行
 - 菜名、价格、来源名由 `build.py` 从 `data.py` 导出到 `collector/names.gen.js`（**不要手改**），
   看板读它——Worker 读不到 `data.py`。改了菜单要 `build.py` + `wrangler deploy`，
   看板上的名字才跟着变（只影响显示，不影响数字）

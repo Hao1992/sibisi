@@ -11,6 +11,11 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 
 NAME = {}
 PRICE = {}
+# 同一款饮料有两套 id：推荐加点 / 推荐搭配 / 套餐发的是 DRK 的短键（"ts"），
+# 酒水单和「其他饮料」列表发的是 DR 的 id（"dr-beers-3"）。不归并的话
+# 同一款酒会在榜上出现两行（青岛 9 次 + 青岛啤酒 3 次），看着像两种酒。
+# data.py 里的 DRKMAP 就是这张桥，以酒水单那套 id 为准
+DRCANON = {}
 # 推荐加点里默认选中的那一款饮料。dashboard 要拿它和「客人自己翻酒水单最常点的」比
 DEFAULT_DRINK = ("dr-beers-0", "dr-beers-0", None)
 
@@ -37,6 +42,7 @@ try:
         for _i, _x in enumerate(_lst):
             _id = "dr-%s-%d" % (_cat, _i)
             NAME[_id], PRICE[_id] = _t(_x[0]), _x[1]
+    DRCANON = dict(_d.DRKMAP)
     DEFAULT_DRINK = ("dr-beers-0", NAME.get("dr-beers-0", "dr-beers-0"), PRICE.get("dr-beers-0"))
 except Exception:
     pass                                            # 读不到就只显示代码，不让报表挂掉
@@ -62,3 +68,5 @@ WITH_IMP = ("menu", "luck", "first")
 
 sname = lambda s: SRCN.get(s, s or "(无)")
 dname = lambda c: NAME.get(c, "")
+# 饮料 id 归一：短键换成酒水单那套 id，其余原样
+canon_drink = lambda k: DRCANON.get(k, k)

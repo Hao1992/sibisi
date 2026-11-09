@@ -69,6 +69,8 @@ open(_gen, "w", encoding="utf-8").write(
     "// 改了菜单要 build.py + wrangler deploy，看板上的名字才跟着变（只影响显示，不影响数字）。\n"
     "export const NAME = %s;\nexport const PRICE = %s;\n"
     "export const DEFAULT_DRINK = %s;\nexport const SRCN = %s;\nexport const WITH_IMP = %s;\n"
-    % (_J(_n.NAME), _J(_n.PRICE), _J(list(_n.DEFAULT_DRINK)), _J(_n.SRCN), _J(list(_n.WITH_IMP))))
+    "export const DRCANON = %s;\n"
+    % (_J(_n.NAME), _J(_n.PRICE), _J(list(_n.DEFAULT_DRINK)), _J(_n.SRCN), _J(list(_n.WITH_IMP)),
+       _J(_n.DRCANON)))
 
 print("built index.html", "| missing images:", missing or "none", "| missing thumbs:", nothumb or "none")

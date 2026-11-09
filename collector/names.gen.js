@@ -6,3 +6,4 @@ export const PRICE = {"1-1": 9, "1-2": 9.5, "1-3": 10, "1-4": 10, "1-5": 11, "1-
 export const DEFAULT_DRINK = ["dr-beers-0", "Amstel 1/3", 2.5];
 export const SRCN = {"(旧)": "(旧数据，未分来源)", "det": "详情页里", "drinks": "酒水单", "first": "顶层推荐", "hero": "首屏按钮", "luck": "节气推荐", "menu": "菜单正文", "order": "结算前加点", "pack": "多人套餐", "pairbox": "推荐搭配整套", "pick": "加小菜/饮料列表"};
 export const WITH_IMP = ["menu", "luck", "first"];
+export const DRCANON = {"ag": "dr-beers-4", "am": "dr-beers-0", "aq": "dr-soft-3", "cc": "dr-soft-0", "ccz": "dr-soft-0", "fa": "dr-soft-1", "gt": "dr-soft-4", "hk": "dr-beers-2", "ne": "dr-soft-2", "rd": "dr-beers-1", "ts": "dr-beers-3", "wl": "dr-soft-6"};

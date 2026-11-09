@@ -24,7 +24,7 @@
 //
 // 菜名和来源名在 names.gen.js 里，由 source/build.py 从 source/data.py 生成——
 // Worker 读不到 data.py，所以改了菜单要重新 build + deploy，名字才跟着变（只影响显示）。
-import { NAME, PRICE, DEFAULT_DRINK, SRCN, WITH_IMP } from "./names.gen.js";
+import { NAME, PRICE, DEFAULT_DRINK, SRCN, WITH_IMP, DRCANON } from "./names.gen.js";
 
 const TZ = 3600;        // Valencia 冬令时 UTC+1。三月底换夏令时要改成 7200
 const CUT_H = 5;        // 业务日从早上 5 点切：23:00 打烊，事件缓冲最晚 01:00 才落库
@@ -62,6 +62,9 @@ const wday = (d) => "周" + WEEK[(new Date(d + "T00:00:00Z").getUTCDay() + 6) % 
 const short = (d) => d.slice(5);
 const sname = (s) => SRCN[s] || s || "(无)";
 const dname = (c) => NAME[c] || "";
+// 同一款饮料有两套 id：推荐那边发的是短键（"ts"），酒水单发的是 "dr-beers-3"。
+// 不归并的话同一款酒在榜上会出现两行，看着像两种酒
+const canonDrink = (k) => DRCANON[k] || k;
 
 // ── 1. 聚合层 ────────────────────────────────────────────────────────────
 
@@ -96,7 +99,7 @@ class Ses {
         && v && DISH.test(v)) {
       bump(this.dish, K(v, name), n);
     }
-    if (name === "drink" && v) bump(this.drink, v, n);
+    if (name === "drink" && v) bump(this.drink, canonDrink(v), n);
     if (name === "combo" && v) bump(this.pack, v, n);
   }
 
